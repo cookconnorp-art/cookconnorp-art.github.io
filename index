@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bricks Scholarships | Building the next chapter, one forgotten brick at a time</title>
+<meta name="description" content="Bricks Scholarships is a network of FIRST alumni turning donated LEGO robotics sets into a self-sustaining scholarship fund for graduating FIRST students.">
+<style>
+  :root{
+    --princeton-orange:#ff8811;
+    --jasmine:#f4d06f;
+    --floral-white:#fff8f0;
+    --pearl-aqua:#9dd9d2;
+    --space-indigo:#392f5a;
+    --ink:var(--space-indigo);
+    --bg:var(--floral-white);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+
+  @keyframes spin3d{
+    from{transform:rotateX(-18deg) rotateY(0deg);}
+    to{transform:rotateX(-18deg) rotateY(360deg);}
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-14px);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .cube3d, .float{animation:none !important;}
+  }
+
+  /* ---------- camera-shutter reveal ---------- */
+  .shutter{position:relative;overflow:hidden;}
+  .shutter-bars{
+    position:absolute;inset:0;
+    display:flex;
+    z-index:2;
+    pointer-events:none;
+  }
+  .shutter-bars span{
+    flex:1;
+    background:var(--space-indigo);
+    transform:scaleY(1);
+    transform-origin:top;
+    transition:transform .7s cubic-bezier(.65,0,.35,1);
+  }
+  .shutter-bars span:nth-child(1){transition-delay:0s;}
+  .shutter-bars span:nth-child(2){transition-delay:.06s;}
+  .shutter-bars span:nth-child(3){transition-delay:.12s;}
+  .shutter-bars span:nth-child(4){transition-delay:.18s;}
+  .shutter-bars span:nth-child(5){transition-delay:.24s;}
+  .shutter-bars span:nth-child(6){transition-delay:.3s;}
+  .shutter.is-visible .shutter-bars span{transform:scaleY(0);transform-origin:bottom;}
+  @media (prefers-reduced-motion:reduce){
+    .shutter-bars{display:none;}
+  }
+
+  /* ---------- moving glow orbs ---------- */
+  .glow-field{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+  .glow-orb{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(60px);
+    opacity:0.55;
+  }
+  @keyframes drift1{
+    0%,100%{transform:translate(0,0);}
+    33%{transform:translate(60px,-40px);}
+    66%{transform:translate(-30px,30px);}
+  }
+  @keyframes drift2{
+    0%,100%{transform:translate(0,0);}
+    33%{transform:translate(-50px,40px);}
+    66%{transform:translate(40px,-25px);}
+  }
+  @keyframes drift3{
+    0%,100%{transform:translate(0,0);}
+    50%{transform:translate(35px,50px);}
+  }
+  .glow-orb.a{animation:drift1 14s ease-in-out infinite;}
+  .glow-orb.b{animation:drift2 18s ease-in-out infinite;}
+  .glow-orb.c{animation:drift3 11s ease-in-out infinite;}
+  @media (prefers-reduced-motion:reduce){
+    .glow-orb{animation:none !important;}
+  }
+
+  /* ---------- glow sweep (idle shimmer on buttons) ---------- */
+  .glow-sweep{position:relative;overflow:hidden;}
+  .glow-sweep::after{
+    content:'';
+    position:absolute;
+    top:0;left:-60%;
+    width:50%;height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform:skewX(-20deg);
+    animation:sweep 5s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%{left:-60%;}
+    45%{left:130%;}
+    100%{left:130%;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .glow-sweep::after{display:none;}
+  }
+
+  /* ---------- click pulse (fires once on click) ---------- */
+  .glow-sweep{position:relative;}
+  .click-pulse{
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+  }
+  .click-pulse span{
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    box-shadow:0 0 0 0 rgba(255,136,17,0.65);
+    opacity:0;
+  }
+  .click-pulse span.firing{
+    animation:pulseOut .65s ease-out;
+  }
+  @keyframes pulseOut{
+    0%{box-shadow:0 0 0 0 rgba(255,136,17,0.65);opacity:1;}
+    100%{box-shadow:0 0 0 22px rgba(255,136,17,0);opacity:0;}
+  }
+  .flash-burst{
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    background:radial-gradient(circle, rgba(255,255,255,0.9), transparent 70%);
+    opacity:0;
+    pointer-events:none;
+  }
+  .flash-burst.firing{
+    animation:flashOut .5s ease-out;
+  }
+  @keyframes flashOut{
+    0%{opacity:0.9;}
+    100%{opacity:0;}
+  }
+
+  .reveal{
+    opacity:0;
+    transform:translateY(36px);
+    transition:opacity .8s ease, transform .8s ease;
+  }
+  .reveal.is-visible{
+    opacity:1;
+    transform:translateY(0);
+  }
+  .reveal-delay-1{transition-delay:.1s;}
+  .reveal-delay-2{transition-delay:.2s;}
+  .reveal-delay-3{transition-delay:.3s;}
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none;}
+  }
+
+  /* ---------- blank image placeholders ---------- */
+  .img-placeholder{
+    position:relative;
+    border-radius:14px;
+    overflow:hidden;
+    background:
+      linear-gradient(135deg, rgba(57,47,90,0.08), rgba(255,136,17,0.08)),
+      repeating-linear-gradient(45deg, rgba(57,47,90,0.05) 0 12px, transparent 12px 24px);
+    border:1px dashed rgba(57,47,90,0.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:220px;
+  }
+  .img-placeholder svg{
+    width:44px;height:44px;
+    color:rgba(57,47,90,0.35);
+  }
+  .img-placeholder::after{
+    content:'Your photo here';
+    position:absolute;
+    bottom:12px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.72rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:rgba(57,47,90,0.4);
+  }
+  .img-placeholder.round{
+    border-radius:50%;
+    min-height:0;
+  }
+  .img-placeholder.round::after{display:none;}
+  .img-placeholder.round svg{width:34px;height:34px;}
+
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3{
+    font-family:'Space Grotesk','Inter',sans-serif;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    color:var(--space-indigo);
+  }
+
+  a{color:inherit;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 1.75rem;}
+  .wrap-narrow{max-width:760px;margin:0 auto;padding:0 1.75rem;}
+
+  /* ---------- nav ---------- */
+  nav{
+    position:fixed;
+    top:1.25rem; left:0; right:0;
+    z-index:20;
+    display:flex;
+    justify-content:center;
+    padding:0 1.5rem;
+  }
+  nav .wrap{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    max-width:1080px;
+    padding:1rem 1.75rem;
+    background:linear-gradient(160deg, #ffffff, var(--floral-white));
+    border-radius:999px;
+    box-shadow:
+      0 20px 45px -15px rgba(57,47,90,0.22),
+      0 0 0 1px rgba(57,47,90,0.05),
+      0 0 36px rgba(255,136,17,0.22);
+  }
+  .brand{
+    display:flex;align-items:center;gap:0.6rem;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1rem;
+    color:var(--space-indigo);
+  }
+  .brand-icon{
+    position:relative;
+    width:34px;height:34px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .brand-icon canvas{display:block;}
+  nav ul{display:flex;gap:2.25rem;list-style:none;font-size:0.88rem;font-weight:500;}
+  nav a{text-decoration:none;color:rgba(57,47,90,0.65);border-bottom:2px solid transparent;padding-bottom:2px;transition:color .2s ease, border-color .2s ease;}
+  nav a:hover, nav a:focus-visible{color:var(--space-indigo);border-color:var(--princeton-orange);}
+  .nav-cta{
+    position:relative;
+    background:linear-gradient(135deg, var(--princeton-orange), #ff6b35);
+    color:var(--floral-white);
+    padding:0.6rem 1.35rem;border-radius:14px;font-size:0.86rem;
+    box-shadow:0 6px 16px rgba(20,15,40,0.4), inset 0 1px 0 rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.1);
+    cursor:pointer;
+    font-family:inherit;
+    font-weight:600;
+  }
+  @media (max-width:640px){ nav ul{display:none;} }
+
+  /* ---------- hero (full-bleed cinematic) ---------- */
+  .hero{
+    min-height:96vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:8rem 0 4rem;
+    background:
+      linear-gradient(160deg, var(--space-indigo) 0%, #4a3d73 45%, #6b4a8f 70%, var(--princeton-orange) 135%);
+    color:var(--floral-white);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 12% 15%, rgba(244,208,111,0.28), transparent 38%),
+      radial-gradient(circle at 88% 20%, rgba(255,136,17,0.25), transparent 42%),
+      radial-gradient(circle at 80% 85%, rgba(157,217,210,0.22), transparent 45%),
+      radial-gradient(circle at 10% 90%, rgba(157,217,210,0.14), transparent 40%);
+    pointer-events:none;
+  }
+  .hero .wrap{position:relative;display:flex;align-items:center;gap:3rem;justify-content:space-between;}
+  .hero-copy{max-width:640px;}
+  .hero-3d{
+    flex-shrink:0;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    perspective:1000px;
+    width:240px;height:240px;
+  }
+  #brick-3d{position:absolute;inset:0;width:100%;height:100%;}
+  #brick-3d canvas{display:block;}
+  .cube3d{
+    width:190px;height:190px;
+    position:relative;
+    transform-style:preserve-3d;
+    animation:spin3d 16s linear infinite, float 5s ease-in-out infinite;
+  }
+  .cube3d .face{
+    position:absolute;
+    box-shadow:inset 0 0 30px rgba(0,0,0,0.12);
+  }
+  .cube3d .front{
+    width:190px;height:110px;top:40px;
+    transform:translateZ(95px);
+    background:linear-gradient(140deg,var(--princeton-orange),#ffab52);
+    border-radius:4px;
+  }
+  .cube3d .back{
+    width:190px;height:110px;top:40px;
+    transform:rotateY(180deg) translateZ(95px);
+    background:linear-gradient(140deg,#c96f0e,#e8790a);
+    border-radius:4px;
+  }
+  .cube3d .right{
+    width:190px;height:110px;top:40px;
+    transform:rotateY(90deg) translateZ(95px);
+    background:linear-gradient(140deg,#e8790a,var(--princeton-orange));
+    border-radius:4px;
+  }
+  .cube3d .left{
+    width:190px;height:110px;top:40px;
+    transform:rotateY(-90deg) translateZ(95px);
+    background:linear-gradient(140deg,#c96f0e,#a85c0b);
+    border-radius:4px;
+  }
+  .cube3d .bottom{
+    width:190px;height:190px;
+    transform:rotateX(-90deg) translateZ(55px);
+    background:#a85c0b;
+    border-radius:4px;
+  }
+  .cube3d .top{
+    width:190px;height:190px;
+    transform:rotateX(90deg) translateZ(55px);
+    background:linear-gradient(140deg,#ffab52,var(--princeton-orange));
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    align-items:center;
+    justify-items:center;
+    gap:10px;
+    padding:26px;
+    border-radius:4px;
+    transform-style:preserve-3d;
+  }
+  .cube3d .stud{
+    position:relative;
+    width:52px;height:52px;
+    transform-style:preserve-3d;
+  }
+  .cube3d .stud-base{
+    position:absolute;inset:0;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #e8790a, #a85c0b 75%);
+    box-shadow:inset 0 4px 8px rgba(0,0,0,0.4);
+  }
+  .cube3d .stud-wall{
+    position:absolute;
+    left:50%;top:50%;
+    width:52px;height:18px;
+    margin-left:-26px;margin-top:-9px;
+    border-radius:50%/50%;
+    background:linear-gradient(90deg, #a85c0b, #ff9a3d, #c96f0e);
+    transform:rotateX(-90deg);
+    transform-origin:center center;
+  }
+  .cube3d .stud-cap{
+    position:absolute;inset:6px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffe3bd, var(--princeton-orange) 72%);
+    box-shadow:0 6px 10px rgba(0,0,0,0.35), inset 0 -3px 4px rgba(0,0,0,0.2), inset 0 2px 3px rgba(255,255,255,0.5);
+    transform:translateZ(18px);
+  }
+  @media (max-width:860px){
+    .hero .wrap{flex-direction:column;text-align:center;}
+    .hero-3d{margin-top:1rem;}
+  }
+  .hero-eyebrow{
+    font-family:'Space Grotesk',sans-serif;
+    text-transform:uppercase;letter-spacing:0.2em;font-size:0.76rem;font-weight:700;
+    color:var(--jasmine);margin-bottom:1.75rem;
+  }
+  h1.hero-headline{
+    font-size:clamp(2.6rem, 7vw, 5.2rem);
+    line-height:1.03;
+    max-width:15ch;
+    color:var(--floral-white);
+    font-weight:700;
+  }
+  h1.hero-headline em{
+    font-style:italic;
+    color:var(--jasmine);
+    font-weight:500;
+  }
+  .hero-sub{
+    margin-top:2rem;
+    max-width:48ch;
+    font-size:1.15rem;
+    color:rgba(255,248,240,0.85);
+  }
+  .hero-scroll{
+    margin-top:3.5rem;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.78rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:rgba(255,248,240,0.65);
+    display:flex;align-items:center;gap:0.6rem;
+  }
+  .hero-scroll .line{width:36px;height:1px;background:rgba(255,248,240,0.5);}
+
+  /* ---------- editorial intro ---------- */
+  .intro{
+    padding:7rem 0 5rem;
+  }
+  .intro-grid{
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:3.5rem;
+    align-items:center;
+  }
+  @media (max-width:800px){
+    .intro-grid{grid-template-columns:1fr;}
+  }
+  .intro .kicker{
+    font-family:'Space Grotesk',sans-serif;
+    text-transform:uppercase;letter-spacing:0.18em;font-size:0.76rem;font-weight:700;
+    color:var(--princeton-orange);margin-bottom:1.25rem;
+  }
+  .intro h2{
+    font-size:clamp(1.8rem, 3.6vw, 2.7rem);
+    line-height:1.2;
+    max-width:22ch;
+    margin-bottom:0.75rem;
+  }
+  .intro h2 em{font-style:italic;font-weight:500;color:var(--princeton-orange);}
+  .intro .underline{margin-bottom:1.75rem;}
+  .intro p{
+    font-size:1.08rem;
+    max-width:64ch;
+    color:rgba(57,47,90,0.88);
+    margin-bottom:1.1rem;
+  }
+
+  /* ---------- impact / stat section (gradient mesh + 3D tilt cards) ---------- */
+  .stats{
+    position:relative;
+    background:
+      radial-gradient(circle at 20% 20%, #4a3d73 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, #ff8811 0%, transparent 40%),
+      radial-gradient(circle at 75% 90%, #9dd9d2 0%, transparent 40%),
+      linear-gradient(150deg, var(--space-indigo), #241d3d 70%);
+    color:var(--floral-white);
+    padding:6rem 0;
+    overflow:hidden;
+  }
+  .stats .kicker{
+    font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.18em;
+    font-size:0.76rem;font-weight:700;color:var(--jasmine);margin-bottom:1rem;text-align:center;
+  }
+  .stats h2{
+    color:var(--floral-white);text-align:center;
+    font-size:clamp(1.7rem,3.5vw,2.3rem);
+    max-width:24ch;margin:0 auto 3.5rem;
+  }
+  .stats-grid{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1.75rem;
+    perspective:1200px;
+  }
+  .stat-card{
+    background:linear-gradient(160deg, rgba(255,248,240,0.1), rgba(255,248,240,0.03));
+    border:1px solid rgba(255,248,240,0.18);
+    border-radius:16px;
+    padding:2.25rem 1.75rem;
+    text-align:center;
+    backdrop-filter:blur(10px);
+    transform-style:preserve-3d;
+    transition:transform .15s ease, box-shadow .3s ease, border-color .3s ease;
+    will-change:transform;
+  }
+  .stat-card:hover{
+    border-color:rgba(244,208,111,0.5);
+    box-shadow:0 20px 40px rgba(0,0,0,0.35);
+  }
+  .stat-num{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(1.7rem,4.2vw,2.8rem);
+    font-weight:700;
+    background:linear-gradient(135deg, var(--jasmine), var(--princeton-orange));
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+    line-height:1;
+  }
+  .stat-label{font-size:0.86rem;color:rgba(255,248,240,0.75);margin-top:0.75rem;}
+  .stat-bar{
+    height:3px;width:36px;margin:1.1rem auto 0;
+    border-radius:2px;
+    background:linear-gradient(90deg, var(--pearl-aqua), var(--jasmine));
+  }
+  @media (max-width:700px){ .stats-grid{grid-template-columns:1fr;gap:1.25rem;} }
+
+  /* ---------- focus grid (card layout) ---------- */
+  .focus{padding:6rem 0;}
+  .focus .kicker{
+    font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.18em;
+    font-size:0.76rem;font-weight:700;color:var(--princeton-orange);margin-bottom:1rem;
+    text-align:center;
+  }
+  .focus h2{
+    text-align:center;
+    font-size:clamp(1.7rem,3.5vw,2.3rem);
+    max-width:26ch;
+    margin:0 auto 3.5rem;
+  }
+  .focus-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:1.5rem;
+  }
+  .focus-card{
+    position:relative;
+    background:linear-gradient(160deg, #ffffff, var(--floral-white));
+    border:1px solid rgba(57,47,90,0.12);
+    border-radius:12px;
+    padding:2rem;
+    transition:transform .15s ease, box-shadow .3s ease;
+    transform-style:preserve-3d;
+    will-change:transform;
+  }
+  .focus-card::before{
+    content:'';
+    position:absolute;inset:-1px;
+    border-radius:13px;
+    padding:1px;
+    background:linear-gradient(135deg, var(--princeton-orange), var(--pearl-aqua), var(--jasmine));
+    opacity:0;
+    transition:opacity .3s ease;
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+    mask-composite:exclude;
+    pointer-events:none;
+  }
+  .focus-card:hover{
+    box-shadow:0 18px 34px rgba(57,47,90,0.14);
+  }
+  .focus-card:hover::before{opacity:1;}
+  .focus-icon{
+    width:42px;height:42px;
+    border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:1.25rem;
+  }
+  .focus-card:nth-child(1) .focus-icon{background:var(--pearl-aqua);}
+  .focus-card:nth-child(2) .focus-icon{background:var(--jasmine);}
+  .focus-card:nth-child(3) .focus-icon{background:var(--princeton-orange);}
+  .focus-card:nth-child(4) .focus-icon{background:var(--pearl-aqua);}
+  .focus-icon svg{width:22px;height:22px;color:var(--space-indigo);}
+  .focus-card h3{font-size:1.15rem;margin-bottom:0.6rem;}
+  .focus-card p{font-size:0.95rem;color:rgba(57,47,90,0.85);}
+  @media (max-width:700px){ .focus-grid{grid-template-columns:1fr;} }
+
+  /* ---------- pull quote (cinematic mid-page) ---------- */
+  .pullquote{
+    background:
+      radial-gradient(circle at 15% 30%, rgba(255,136,17,0.25), transparent 45%),
+      radial-gradient(circle at 85% 70%, rgba(157,217,210,0.35), transparent 45%),
+      linear-gradient(160deg, var(--jasmine), #f8dd8f);
+    padding:6rem 0;
+    text-align:center;
+  }
+  .pullquote blockquote{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:clamp(1.6rem,4vw,2.6rem);
+    font-weight:700;
+    line-height:1.3;
+    max-width:24ch;
+    margin:0 auto;
+    color:var(--space-indigo);
+  }
+  .pullquote .studs{margin-top:2rem;}
+  .studs{display:flex;justify-content:center;gap:12px;padding:0;}
+  .studs span{width:12px;height:12px;border-radius:50%;display:inline-block;}
+  .studs span:nth-child(4n+1){background:var(--princeton-orange);}
+  .studs span:nth-child(4n+2){background:var(--space-indigo);}
+  .studs span:nth-child(4n+3){background:var(--pearl-aqua);}
+  .studs span:nth-child(4n+4){background:var(--space-indigo);opacity:.6;}
+
+  /* ---------- timeline / story ---------- */
+  .story{padding:7rem 0;}
+  .story .kicker{
+    font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.18em;
+    font-size:0.76rem;font-weight:700;color:var(--princeton-orange);margin-bottom:1rem;
+  }
+  .story h2{font-size:clamp(1.8rem,3.6vw,2.5rem);max-width:24ch;margin-bottom:0.75rem;}
+  .story .underline{margin-bottom:2.5rem;}
+  .timeline{
+    border-left:3px solid var(--pearl-aqua);
+    padding-left:1.75rem;
+    display:flex;flex-direction:column;gap:2.25rem;
+  }
+  .timeline-item{position:relative;}
+  .timeline-item::before{
+    content:'';position:absolute;left:-2.35rem;top:0.3rem;
+    width:12px;height:12px;border-radius:50%;
+    background:var(--princeton-orange);border:3px solid var(--floral-white);
+    box-shadow:0 0 0 2px var(--pearl-aqua);
+  }
+  .timeline-year{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.85rem;
+    color:var(--princeton-orange);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.4rem;
+  }
+  .timeline-item p{max-width:64ch;color:rgba(57,47,90,0.88);}
+
+  /* ---------- 3D text + underline utilities ---------- */
+  .text-3d{
+    color:var(--space-indigo);
+    text-shadow:
+      0 1px 0 rgba(255,255,255,0.6),
+      1px 1px 1px rgba(57,47,90,0.15);
+  }
+  .text-3d-light{
+    color:var(--floral-white);
+    text-shadow:
+      0 1px 0 rgba(255,255,255,0.25),
+      1px 1px 2px rgba(0,0,0,0.35);
+  }
+  .underline{
+    display:block;
+    width:56px;height:4px;
+    border-radius:2px;
+    background:linear-gradient(90deg, var(--princeton-orange), var(--jasmine), var(--pearl-aqua));
+  }
+  .underline.center{margin:1rem auto 0;}
+  .underline.left{margin:1rem 0 0;}
+
+  /* ---------- team / members section ---------- */
+  .team{
+    position:relative;
+    padding:7rem 0;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 15% 15%, rgba(255,136,17,0.16), transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(157,217,210,0.18), transparent 42%),
+      radial-gradient(circle at 60% 90%, rgba(244,208,111,0.14), transparent 45%),
+      linear-gradient(160deg, var(--space-indigo), #241d3d 75%);
+    color:var(--floral-white);
+  }
+  .team .kicker{
+    font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.18em;
+    font-size:0.76rem;font-weight:700;color:var(--jasmine);margin-bottom:1rem;text-align:center;
+  }
+  .team h2{
+    color:var(--floral-white);text-align:center;
+    font-size:clamp(1.7rem,3.5vw,2.3rem);
+    max-width:26ch;margin:0 auto 3.5rem;
+  }
+  .team-grid{
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1.75rem;
+  }
+  .member-card{
+    background:linear-gradient(160deg, rgba(255,248,240,0.1), rgba(255,248,240,0.03));
+    border:1px solid rgba(255,248,240,0.18);
+    border-radius:18px;
+    padding:2.25rem 2rem;
+    text-align:center;
+    backdrop-filter:blur(10px);
+    transition:transform .2s ease, box-shadow .3s ease, border-color .3s ease;
+  }
+  .member-card:hover{
+    transform:translateY(-6px);
+    border-color:rgba(244,208,111,0.5);
+    box-shadow:0 20px 40px rgba(0,0,0,0.35);
+  }
+  .member-photo{
+    width:104px;height:104px;
+    margin:0 auto 1.5rem;
+    border:2px solid rgba(255,248,240,0.25);
+  }
+  .member-name{font-size:1.15rem;color:var(--floral-white);margin-bottom:0.3rem;}
+  .member-role{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--pearl-aqua);
+    margin-bottom:1.1rem;
+  }
+  .member-bio{font-size:0.92rem;color:rgba(255,248,240,0.72);}
+  .member-tags{display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:1.25rem;}
+  .member-tags span{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.72rem;
+    padding:0.3rem 0.7rem;
+    border-radius:999px;
+    background:rgba(255,248,240,0.1);
+    border:1px solid rgba(255,248,240,0.16);
+    color:rgba(255,248,240,0.85);
+  }
+  @media (max-width:820px){ .team-grid{grid-template-columns:1fr;} }
+
+  /* ---------- get involved / donate steps ---------- */
+  .donate{padding:7rem 0;}
+  .donate .kicker{
+    font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.18em;
+    font-size:0.76rem;font-weight:700;color:var(--princeton-orange);margin-bottom:1rem;
+  }
+  .donate h2{font-size:clamp(1.8rem,3.6vw,2.5rem);max-width:26ch;margin-bottom:0.75rem;}
+  .donate .underline{margin-bottom:1.5rem;}
+  .donate .lede{
+    font-size:1.08rem;
+    max-width:64ch;
+    color:rgba(57,47,90,0.85);
+    margin-bottom:3rem;
+  }
+  .donate-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1.5rem;
+    margin-bottom:3rem;
+  }
+  .donate-step{
+    position:relative;
+    background:linear-gradient(160deg, #ffffff, var(--floral-white));
+    border:1px solid rgba(57,47,90,0.12);
+    border-radius:12px;
+    padding:1.9rem 1.6rem;
+    transition:transform .15s ease, box-shadow .3s ease;
+  }
+  .donate-step:hover{
+    transform:translateY(-4px);
+    box-shadow:0 18px 34px rgba(57,47,90,0.14);
+  }
+  .donate-step .step-num{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.78rem;
+    font-weight:700;
+    color:var(--floral-white);
+    background:linear-gradient(135deg, var(--princeton-orange), #ff6b35);
+    width:30px;height:30px;
+    border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:1.1rem;
+  }
+  .donate-step h3{font-size:1.02rem;margin-bottom:0.5rem;}
+  .donate-step p{font-size:0.9rem;color:rgba(57,47,90,0.8);}
+  @media (max-width:900px){ .donate-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:560px){ .donate-grid{grid-template-columns:1fr;} }
+  .donate-accepted{
+    background:var(--pearl-aqua);
+    border-radius:16px;
+    padding:2rem 2.25rem;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:1.5rem;
+    justify-content:space-between;
+  }
+  .donate-accepted .accepted-label{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    color:var(--space-indigo);
+    font-size:1rem;
+    flex-shrink:0;
+  }
+  .donate-accepted .accepted-tags{display:flex;flex-wrap:wrap;gap:0.6rem;}
+  .donate-accepted .accepted-tags span{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.82rem;
+    padding:0.45rem 0.9rem;
+    border-radius:999px;
+    background:rgba(255,255,255,0.55);
+    color:var(--space-indigo);
+    font-weight:600;
+  }
+
+  /* ---------- applications opening 2027 banner ---------- */
+  .apply-banner{
+    position:relative;
+    padding:6.5rem 0;
+    overflow:hidden;
+    text-align:center;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.35), transparent 45%),
+      radial-gradient(circle at 80% 80%, rgba(57,47,90,0.15), transparent 45%),
+      linear-gradient(160deg, var(--jasmine), #f8dd8f 75%);
+  }
+  .apply-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:0.6rem;
+    background:var(--space-indigo);
+    color:var(--floral-white);
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.78rem;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    padding:0.55rem 1.2rem;
+    border-radius:999px;
+    margin-bottom:1.75rem;
+  }
+  .apply-badge .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--princeton-orange);
+    box-shadow:0 0 8px var(--princeton-orange);
+  }
+  .apply-banner h2{
+    font-size:clamp(2.2rem,6vw,3.6rem);
+    max-width:16ch;
+    margin:0 auto 1.25rem;
+    color:var(--space-indigo);
+  }
+  .apply-banner .lede{
+    font-size:1.08rem;
+    max-width:56ch;
+    margin:0 auto 2.5rem;
+    color:rgba(57,47,90,0.85);
+  }
+  .apply-details{
+    display:flex;
+    justify-content:center;
+    gap:1.25rem;
+    flex-wrap:wrap;
+  }
+  .apply-detail{
+    background:rgba(255,255,255,0.55);
+    border-radius:12px;
+    padding:1.5rem 1.75rem;
+    max-width:220px;
+    text-align:left;
+  }
+  .apply-detail .step-num{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.72rem;
+    font-weight:700;
+    color:var(--space-indigo);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-bottom:0.5rem;
+  }
+  .apply-detail p{font-size:0.92rem;color:rgba(57,47,90,0.85);}
+  .apply-cta{
+    display:inline-flex;
+    margin-top:2.5rem;
+    background:var(--space-indigo);
+    color:var(--floral-white);
+    padding:0.85rem 1.9rem;
+    border-radius:999px;
+    font-size:0.9rem;
+    font-weight:700;
+    text-decoration:none;
+    box-shadow:0 10px 25px rgba(57,47,90,0.3);
+    transition:transform .18s ease;
+  }
+  .apply-cta:hover, .apply-cta:focus-visible{transform:translateY(-2px);}
+
+  /* ---------- become a member / volunteer ---------- */
+  .volunteer{padding:7rem 0;}
+  .volunteer .kicker{
+    font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.18em;
+    font-size:0.76rem;font-weight:700;color:var(--princeton-orange);margin-bottom:1rem;
+  }
+  .volunteer h2{font-size:clamp(1.8rem,3.6vw,2.5rem);max-width:26ch;margin-bottom:0.75rem;}
+  .volunteer .underline{margin-bottom:1.5rem;}
+  .volunteer .lede{
+    font-size:1.08rem;
+    max-width:64ch;
+    color:rgba(57,47,90,0.85);
+    margin-bottom:3rem;
+  }
+  .volunteer-layout{
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:3rem;
+    align-items:start;
+  }
+  .volunteer-roles{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1.25rem;
+  }
+  .volunteer-role{
+    background:linear-gradient(160deg, #ffffff, var(--floral-white));
+    border:1px solid rgba(57,47,90,0.12);
+    border-radius:12px;
+    padding:1.6rem;
+    transition:transform .15s ease, box-shadow .3s ease;
+  }
+  .volunteer-role:hover{
+    transform:translateY(-4px);
+    box-shadow:0 18px 34px rgba(57,47,90,0.14);
+  }
+  .volunteer-role .role-icon{
+    width:38px;height:38px;
+    border-radius:8px;
+    background:var(--pearl-aqua);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:1rem;
+  }
+  .volunteer-role .role-icon svg{width:19px;height:19px;color:var(--space-indigo);}
+  .volunteer-role h3{font-size:0.98rem;margin-bottom:0.4rem;}
+  .volunteer-role p{font-size:0.86rem;color:rgba(57,47,90,0.78);}
+  .volunteer-card{
+    position:relative;
+    background:linear-gradient(160deg, var(--space-indigo), #241d3d);
+    border-radius:16px;
+    padding:2.25rem;
+    color:var(--floral-white);
+  }
+  .volunteer-card h3{color:var(--floral-white);font-size:1.15rem;margin-bottom:0.75rem;}
+  .volunteer-card p{color:rgba(255,248,240,0.75);font-size:0.92rem;margin-bottom:1.5rem;}
+  .volunteer-card .contact-row{margin-bottom:1rem;}
+  .volunteer-card .contact-row svg{color:var(--jasmine);}
+  .volunteer-card .contact-row a{border-bottom:2px solid rgba(255,248,240,0.35);}
+  @media (max-width:900px){
+    .volunteer-layout{grid-template-columns:1fr;}
+  }
+  @media (max-width:560px){
+    .volunteer-roles{grid-template-columns:1fr;}
+  }
+
+  /* ---------- FAQ (glass cards, matching hero/stats energy) ---------- */
+  .faq{
+    position:relative;
+    padding:7rem 0;
+    overflow:hidden;
+    background:
+      radial-gradient(circle at 85% 10%, rgba(255,136,17,0.28), transparent 45%),
+      radial-gradient(circle at 10% 90%, rgba(57,47,90,0.35), transparent 45%),
+      linear-gradient(160deg, var(--pearl-aqua), #c8e8e3 75%);
+  }
+  .faq .kicker{
+    font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.18em;
+    font-size:0.76rem;font-weight:700;color:var(--space-indigo);margin-bottom:1rem;
+  }
+  .faq h2{font-size:clamp(1.7rem,3.5vw,2.3rem);margin-bottom:0.75rem;}
+  .faq .underline{margin-bottom:2.5rem;}
+  .faq-list{display:flex;flex-direction:column;gap:1.1rem;}
+  details.faq-card{
+    background:linear-gradient(160deg, rgba(255,255,255,0.55), rgba(255,255,255,0.25));
+    border:1px solid rgba(255,255,255,0.5);
+    border-radius:14px;
+    padding:0;
+    backdrop-filter:blur(12px);
+    transition:transform .2s ease, box-shadow .3s ease;
+    overflow:hidden;
+  }
+  details.faq-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 16px 32px rgba(57,47,90,0.16);
+  }
+  details.faq-card summary{
+    cursor:pointer;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:1.05rem;
+    list-style:none;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:1rem;
+    padding:1.5rem 1.75rem;
+  }
+  details.faq-card summary::-webkit-details-marker{display:none;}
+  details.faq-card summary::after{
+    content:'+';
+    font-size:1.4rem;
+    font-weight:400;
+    flex-shrink:0;
+    color:var(--princeton-orange);
+    transition:transform .2s ease;
+  }
+  details.faq-card[open] summary::after{content:'\2013';transform:rotate(180deg);}
+  details.faq-card p{
+    margin:0 1.75rem 1.6rem;
+    max-width:64ch;
+    color:rgba(57,47,90,0.88);
+    font-size:0.98rem;
+    border-left:3px solid var(--princeton-orange);
+    padding-left:1rem;
+  }
+
+  /* ---------- contact / closing (cinematic, matching hero) ---------- */
+  .contact{
+    position:relative;
+    padding:8rem 0;
+    overflow:hidden;
+    background:
+      linear-gradient(200deg, var(--space-indigo) 0%, #4a3d73 50%, #6b4a8f 80%, var(--princeton-orange) 145%);
+    color:var(--floral-white);
+    text-align:center;
+  }
+  .contact::after{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(244,208,111,0.22), transparent 42%),
+      radial-gradient(circle at 85% 80%, rgba(157,217,210,0.22), transparent 45%);
+    pointer-events:none;
+  }
+  .contact .kicker{
+    font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:0.18em;
+    font-size:0.76rem;font-weight:700;color:var(--jasmine);margin-bottom:1rem;
+  }
+  .contact h2{font-size:clamp(1.8rem,3.8vw,2.6rem);max-width:20ch;margin:0 auto 0.75rem;color:var(--floral-white);}
+  .contact .underline{margin-bottom:1.5rem;}
+  .contact p{max-width:52ch;margin:0 auto 2.5rem;color:rgba(255,248,240,0.82);position:relative;}
+  .contact-card{
+    position:relative;
+    background:linear-gradient(160deg, rgba(255,248,240,0.14), rgba(255,248,240,0.04));
+    border:1px solid rgba(255,248,240,0.22);
+    backdrop-filter:blur(14px);
+    border-radius:16px;
+    padding:2.25rem;
+    max-width:420px;
+    margin:0 auto;
+    display:grid;
+    gap:1.1rem;
+    text-align:left;
+    box-shadow:0 25px 55px rgba(0,0,0,0.35);
+    overflow:hidden;
+  }
+  .contact-card::before{
+    content:'';
+    position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg, var(--princeton-orange), var(--jasmine), var(--pearl-aqua));
+  }
+  .contact-row{display:flex;align-items:center;gap:0.9rem;font-size:1rem;font-weight:600;color:var(--floral-white);}
+  .contact-row svg{width:20px;height:20px;flex-shrink:0;color:var(--jasmine);}
+  .contact-row a{text-decoration:none;border-bottom:2px solid rgba(255,248,240,0.35);}
+  .contact-row a:hover, .contact-row a:focus-visible{border-color:var(--floral-white);}
+  .contact-cta{
+    position:relative;
+    display:inline-flex;
+    margin-top:2.5rem;
+    background:linear-gradient(135deg, var(--princeton-orange), #ff6b35);
+    color:var(--floral-white);
+    padding:0.9rem 2rem;border-radius:999px;font-size:0.95rem;font-weight:700;
+    box-shadow:0 10px 25px rgba(255,136,17,0.4);
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  footer{
+    position:relative;
+    background:linear-gradient(180deg, var(--space-indigo), #241d3d);
+    color:rgba(255,248,240,0.7);
+    padding:4rem 1.75rem 2.5rem;
+    font-size:0.85rem;
+    overflow:hidden;
+  }
+  footer::before{
+    content:'';
+    position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg, var(--princeton-orange), var(--jasmine), var(--pearl-aqua));
+  }
+  footer::after{
+    content:'';
+    position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,136,17,0.12), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(157,217,210,0.1), transparent 40%);
+    pointer-events:none;
+  }
+  .footer-inner{
+    position:relative;
+    max-width:1080px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2rem;
+    text-align:center;
+  }
+  .footer-brand{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1.4rem;
+    font-weight:700;
+  }
+  .footer-links{
+    display:flex;
+    gap:2rem;
+    flex-wrap:wrap;
+    justify-content:center;
+    font-weight:600;
+  }
+  .footer-links a{
+    text-decoration:none;
+    color:rgba(255,248,240,0.8);
+    border-bottom:2px solid transparent;
+    padding-bottom:3px;
+    transition:border-color .2s ease, color .2s ease;
+  }
+  .footer-links a:hover, .footer-links a:focus-visible{
+    border-color:var(--jasmine);
+    color:var(--floral-white);
+  }
+  .footer-fine{
+    color:rgba(255,248,240,0.5);
+    font-size:0.78rem;
+    padding-top:1.5rem;
+    border-top:1px solid rgba(255,248,240,0.12);
+    width:100%;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">
+      <span class="brand-icon" id="nav-brick-3d"></span>
+      Bricks Scholarships
+    </div>
+    <ul>
+      <li><a href="#mission">Mission</a></li>
+      <li><a href="#story">Our Story</a></li>
+      <li><a href="#team">Team</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <button class="nav-cta glow-sweep pulse-btn" data-target="#contact">
+      Get in touch
+      <span class="click-pulse"><span></span></span>
+      <span class="flash-burst"></span>
+    </button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="glow-field" aria-hidden="true">
+    <div class="glow-orb a" style="width:340px;height:340px;top:-60px;left:5%;background:var(--jasmine);"></div>
+    <div class="glow-orb b" style="width:300px;height:300px;top:40%;right:8%;background:var(--princeton-orange);"></div>
+    <div class="glow-orb c" style="width:260px;height:260px;bottom:-40px;left:35%;background:var(--pearl-aqua);"></div>
+  </div>
+  <div class="wrap">
+    <div class="hero-copy">
+      <p class="hero-eyebrow">A network of FIRST alumni</p>
+      <h1 class="hero-headline">A <em>college fund</em>, built from forgotten bricks.</h1>
+      <p class="hero-sub">Bricks Scholarships turns retired FLL robotics sets into a self-sustaining scholarship fund for graduating FIRST students who show the motivation and drive to further their education.</p>
+      <div class="hero-scroll"><span class="line"></span> Scroll to learn more</div>
+    </div>
+    <div class="hero-3d" aria-hidden="true">
+      <div id="brick-3d"></div>
+      <div class="cube3d">
+        <div class="face top">
+          <div class="stud"><div class="stud-base"></div><div class="stud-wall"></div><div class="stud-cap"></div></div>
+          <div class="stud"><div class="stud-base"></div><div class="stud-wall"></div><div class="stud-cap"></div></div>
+          <div class="stud"><div class="stud-base"></div><div class="stud-wall"></div><div class="stud-cap"></div></div>
+          <div class="stud"><div class="stud-base"></div><div class="stud-wall"></div><div class="stud-cap"></div></div>
+        </div>
+        <div class="face front"></div>
+        <div class="face back"></div>
+        <div class="face right"></div>
+        <div class="face left"></div>
+        <div class="face bottom"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="stats">
+  <div class="glow-field" aria-hidden="true">
+    <div class="glow-orb a" style="width:280px;height:280px;top:10%;left:8%;background:var(--princeton-orange);"></div>
+    <div class="glow-orb b" style="width:320px;height:320px;bottom:0%;right:5%;background:var(--pearl-aqua);"></div>
+  </div>
+  <div class="wrap" style="position:relative;z-index:1;">
+    <p class="kicker">Impact at a Glance</p>
+    <h2>How impactful can your LEGOs be?</h2>
+    <div class="stats-grid">
+      <div class="stat-card tilt-card reveal">
+        <div class="stat-num">28</div>
+        <div class="stat-label">Years of FLL &amp; FIRST Partnership, Ending 2026</div>
+        <div class="stat-bar"></div>
+      </div>
+      <div class="stat-card tilt-card reveal reveal-delay-1">
+        <div class="stat-num">750,000,000</div>
+        <div class="stat-label">Estimated number of LEGO pieces lost in FIRST storage</div>
+        <div class="stat-bar"></div>
+      </div>
+      <div class="stat-card tilt-card reveal reveal-delay-2">
+        <div class="stat-num">2027</div>
+        <div class="stat-label">Estimated start of fund</div>
+        <div class="stat-bar"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="intro" id="mission">
+  <div class="wrap intro-grid">
+    <div class="reveal">
+      <p class="kicker">Mission Statement</p>
+      <h2>Building the next chapter, <em>one brick at a time</em>.</h2>
+      <span class="underline left"></span>
+      <p>Bricks Scholarships is a network of FIRST alumni on a mission to award merit-based scholarships to graduating FIRST students who demonstrate the motivation, capability, and drive to further their education.</p>
+      <p>Merit-based means our scholarships are awarded based on a student's achievements, initiative, and potential. We evaluate candidates through a combination of a short assessment, a personal essay, and a video submission, giving us a well-rounded view of who they are and how they want to make an impact on their communities and the world.</p>
+      <p>With your team's help, we collect neglected and formerly used FLL sets, Mindstorms, and game pieces, and use them as the capital for an investment fund. The fund is structured as a tax-exempt entity under a 501(c)(3) nonprofit investment pool <em>(pending approval)</em>, creating a sustainable, self-sufficient source of scholarship funding in perpetuity.</p>
+      <p>We plan for the first scholarships to begin paying out starting the 2027 school year, with applications and reviews taking place during the 2027 Michigan State Competition.</p>
+    </div>
+    <div class="img-placeholder shutter reveal reveal-delay-2" style="min-height:340px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <div class="shutter-bars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="focus">
+  <div class="wrap">
+    <p class="kicker">Here for all builders</p>
+    <h2>How the system works</h2>
+    <div class="focus-grid">
+      <div class="focus-card tilt-card reveal">
+        <div class="focus-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="11" rx="1.5"/><circle cx="7.5" cy="6.5" r="1.5"/><circle cx="12" cy="6.5" r="1.5"/><circle cx="16.5" cy="6.5" r="1.5"/></svg></div>
+        <h3>Donated FLL Sets</h3>
+        <p>Teams donate the boards, motors, and bricks they'd otherwise store or toss once a season ends.</p>
+      </div>
+      <div class="focus-card tilt-card reveal reveal-delay-1">
+        <div class="focus-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
+        <h3>An Investment Fund</h3>
+        <p>Donations become the baseline capital for a fund designed to grow and sustain itself for the long run.</p>
+      </div>
+      <div class="focus-card tilt-card reveal reveal-delay-2">
+        <div class="focus-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg></div>
+        <h3>Scholarships</h3>
+        <p>FIRST students apply for and receive scholarship payouts, laptops, and other tools to help further their education and drive.</p>
+      </div>
+      <div class="focus-card tilt-card reveal reveal-delay-3">
+        <div class="focus-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <h3>Starting 2027</h3>
+        <p>Applications and reviews take place during the 2027 Michigan State Competition, with recipients awarded following the competition.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="pullquote">
+  <blockquote>Building the next chapter of students' lives, one forgotten brick at a time.</blockquote>
+  <div class="studs" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+</div>
+
+<section class="story" id="story">
+  <div class="wrap-narrow">
+    <p class="kicker">Our Story</p>
+    <h2>The story of three brothers and a lot of LEGOs</h2>
+    <span class="underline left"></span>
+    <div class="img-placeholder shutter reveal" style="min-height:260px;margin-bottom:2.5rem;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <div class="shutter-bars" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div class="timeline">
+      <div class="timeline-item reveal">
+        <div class="timeline-year">The early years</div>
+        <p>From a young age, our parents were deeply involved in robotics and helped start our school's first FLL team. That first year wasn't great, and we hardly won a match. But as any FIRST team knows, the early experiences are some of the most valuable.</p>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-year">Moving up</div>
+        <p>We eventually moved school districts and progressed through FLL to FTC, embracing our new district's FRC team motto: Learn, Serve, Grow. This meant that as you moved up through the ranks, you went back and mentored the younger students behind you. All three of us mentored FLL teams while in FTC, and FTC teams while on our FRC team : creating a legacy of more and more teams being formed.</p>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-year">High school robotics</div>
+        <p>Each of us joined our high school team, 2834, the Bionic Blackhawks — Riley in 2015, Connor in 2016, and Duncan in 2019. Team 2834 carried forward the "Learn, Serve, Grow" model and became known for helping launch hundreds of new FLL and FTC teams, as well as hosting FLL States. This approach eventually led our team to win the Chairman's Award at the 2018 World Championship, followed by induction into the FIRST Hall of Fame. We still carry that motto with us today.</p>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-year">The discovery</div>
+        <p>During COVID, our former team, 2834, moved facilities to a new shop and accidentally left behind years' worth of old FLL board sets, amounting to tens of thousands of LEGO pieces. That's when we realized: most teams have no plan for what happens to their LEGOs once a season's game is over. They're often just left in storage with no future use. This problem will only grow, as the 2026 FLL season will be the last one of its kind : leaving even more LEGOs with no future purpose unless we find them a second life.</p>
+      </div>
+      <div class="timeline-item reveal">
+        <div class="timeline-year">Today</div>
+        <p>We came up with the idea to give those bricks new purpose, turning them into the baseline capital for a scholarship fund. By donating your team's forgotten LEGOs, you help us prepare more students for life after high school and college. We've been in contact with teams across the state ever since, making trips to schools to dig through old storage closets to rescue and repurpose forgotten LEGOs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="team" id="team">
+  <div class="wrap">
+    <p class="kicker">Get to know us</p>
+    <h2>Our Team</h2>
+    <div class="team-grid">
+      <div class="member-card reveal">
+        <div class="img-placeholder round member-photo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="member-name">Riley Cook</div>
+        <div class="member-role">Co-Founder</div>
+        <p class="member-bio">Grew up on Team 2834, the Bionic Blackhawks. Earned a degree in Economics and Physics at Michigan Technological University, and helped shape the investment strategy behind the fund.</p>
+        <div class="member-tags"><span>Economics</span><span>Physics</span><span>FRC · FTC · FLL</span></div>
+      </div>
+      <div class="member-card reveal reveal-delay-1">
+        <div class="img-placeholder round member-photo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="member-name">Connor Cook</div>
+        <div class="member-role">Co-Founder</div>
+        <p class="member-bio">Also a Bionic Blackhawks alum, Connor earned a degree in Finance at Michigan Tech and leads outreach and donations — he's the one to call about donating your team's old sets.</p>
+        <div class="member-tags"><span>Finance</span><span>Outreach</span><span>FRC · FTC · FLL</span></div>
+      </div>
+      <div class="member-card reveal reveal-delay-2">
+        <div class="img-placeholder round member-photo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="member-name">Duncan Cook</div>
+        <div class="member-role">Co-Founder</div>
+        <p class="member-bio">The youngest of the three, Duncan is on track to earn a degree in Systems Engineering at Michigan Technological University, and works on how the fund is structured to run itself.</p>
+        <div class="member-tags"><span>Systems Engineering</span><span>Operations</span><span>FRC · FTC · FLL</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="donate" id="donate">
+  <div class="wrap">
+    <p class="kicker reveal">Get Involved</p>
+    <h2 class="reveal">How to donate your team's bricks</h2>
+    <span class="underline left reveal"></span>
+    <p class="lede reveal">Donating is simple, and it doesn't require a full working set. Here's exactly what happens once you reach out.</p>
+
+    <div class="donate-grid">
+      <div class="donate-step reveal">
+        <div class="step-num">1</div>
+        <h3>Reach out</h3>
+        <p>Call or email Connor and let him know roughly what your team has sitting around.</p>
+      </div>
+      <div class="donate-step reveal reveal-delay-1">
+        <div class="step-num">2</div>
+        <h3>We coordinate pickup</h3>
+        <p>We'll schedule a pickup, arrange a drop-off, or meet you at a competition, whatever's easiest for your team.</p>
+      </div>
+      <div class="donate-step reveal reveal-delay-2">
+        <div class="step-num">3</div>
+        <h3>Sets get sorted</h3>
+        <p>Donated pieces are sorted and prepped, then converted into capital for the investment fund.</p>
+      </div>
+      <div class="donate-step reveal reveal-delay-3">
+        <div class="step-num">4</div>
+        <h3>You get a receipt</h3>
+        <p>As a 501(c)(3) nonprofit <em>(pending approval)</em>, we'll provide documentation for your records.</p>
+      </div>
+    </div>
+
+    <div class="donate-accepted reveal">
+      <div class="accepted-label">What we accept:</div>
+      <div class="accepted-tags">
+        <span>FLL boards</span>
+        <span>Motors</span>
+        <span>Loose bricks</span>
+        <span>Mindstorms kits</span>
+        <span>Game pieces</span>
+        <span>Even partial sets</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="apply-banner" id="apply">
+  <div class="wrap-narrow">
+    <div class="apply-badge reveal"><span class="dot"></span> Scholarship Applications</div>
+    <h2 class="reveal">Opening 2027.</h2>
+    <p class="lede reveal">There's no application yet, since the fund hasn't started paying out. When it does, here's what to expect.</p>
+    <div class="apply-details">
+      <div class="apply-detail reveal">
+        <div class="step-num">Short Assessment</div>
+        <p>A brief evaluation to understand your background and goals.</p>
+      </div>
+      <div class="apply-detail reveal reveal-delay-1">
+        <div class="step-num">Personal Essay</div>
+        <p>Tell us about your drive to further your education.</p>
+      </div>
+      <div class="apply-detail reveal reveal-delay-2">
+        <div class="step-num">Video Submission</div>
+        <p>Show us the impact you want to make in your community.</p>
+      </div>
+    </div>
+    <a class="apply-cta reveal" href="mailto:cook.connor.p@gmail.com?subject=Notify%20me%20about%20Bricks%20Scholarships%20applications">Get notified when applications open</a>
+  </div>
+</section>
+
+<section class="volunteer" id="volunteer">
+  <div class="wrap">
+    <p class="kicker reveal">Become a Member</p>
+    <h2 class="reveal">Volunteer with Bricks Scholarships</h2>
+    <span class="underline left reveal"></span>
+    <p class="lede reveal">We're a small, all-volunteer team, and there's plenty of room to help beyond donating bricks.</p>
+
+    <div class="volunteer-layout">
+      <div class="volunteer-roles">
+        <div class="volunteer-role reveal">
+          <div class="role-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2 4 4L19 4l2 2-12 12z"/></svg></div>
+          <h3>Pickup &amp; Logistics</h3>
+          <p>Help coordinate pickups and drop-offs with donating teams in your area.</p>
+        </div>
+        <div class="volunteer-role reveal reveal-delay-1">
+          <div class="role-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></div>
+          <h3>Mentorship</h3>
+          <p>Support future applicants with essay feedback and application guidance.</p>
+        </div>
+        <div class="volunteer-role reveal reveal-delay-2">
+          <div class="role-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg></div>
+          <h3>Spread the Word</h3>
+          <p>Talk to teams at competitions and events about donating their old sets.</p>
+        </div>
+        <div class="volunteer-role reveal reveal-delay-3">
+          <div class="role-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg></div>
+          <h3>Fund Operations</h3>
+          <p>Lend a hand with the administrative and financial side of running the fund.</p>
+        </div>
+      </div>
+
+      <div class="volunteer-card reveal">
+        <h3>Ready to help?</h3>
+        <p>Reach out and tell us a bit about what you're interested in — we'll find the right fit.</p>
+        <div class="contact-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <span>Connor Cook : <a href="tel:+12486573745">248-657-3745</a></span>
+        </div>
+        <div class="contact-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+          <span><a href="mailto:cook.connor.p@gmail.com?subject=I%27d%20like%20to%20volunteer">cook.connor.p@gmail.com</a></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="wrap-narrow">
+    <p class="kicker">Got a question for us?</p>
+    <h2 class="text-3d">Frequently asked questions</h2>
+    <span class="underline left"></span>
+
+    <div class="faq-list">
+      <details class="faq-card" open>
+        <summary>How do I donate my team's old FLL sets?</summary>
+        <p>Reach out to Connor directly by phone or email below. We'll coordinate pickup or drop-off, and let you know what's most useful for the fund.</p>
+      </details>
+      <details class="faq-card">
+        <summary>When do scholarships start paying out?</summary>
+        <p>We plan for the first scholarships to begin paying out starting the 2027 school year, with applications and reviews taking place during the 2027 Michigan State Competition.</p>
+      </details>
+      <details class="faq-card">
+        <summary>Who is eligible to apply?</summary>
+        <p>Graduating FIRST students who demonstrate the motivation, capability, and drive to further their education. Scholarships are awarded on merit, evaluated through a short assessment, a personal essay, and a video submission. Full application details will be shared ahead of the 2027 review period.</p>
+      </details>
+      <details class="faq-card">
+        <summary>What items can I donate?</summary>
+        <p>FLL boards, motors, bricks, Mindstorms kits, and game pieces. Basically anything from a retired FLL season that would otherwise sit in storage or get thrown out.</p>
+      </details>
+      <details class="faq-card">
+        <summary>Do I need a full set, or can I donate loose pieces?</summary>
+        <p>Either works! Give us a call, anything and everything helps, even non lego items.</p>
+      </details>
+      <details class="faq-card">
+        <summary>Is my donation tax-deductible?</summary>
+        <p>Bricks Scholarships operates as a tax-exempt 501(c)(3) nonprofit, so donations may be tax-deductible. We recommend consulting a tax professional for guidance specific to your situation.</p>
+      </details>
+      <details class="faq-card">
+        <summary>Is Bricks Scholarships affiliated with the LEGO Group or FIRST?</summary>
+        <p>No. We're an independent, alumni-run scholarship fund built by former FIRST participants and is NOT an official program of FIRST or the LEGO Group.</p>
+      </details>
+      <details class="faq-card">
+        <summary>How is the scholarship fund managed?</summary>
+        <p>Donated sets are converted into capital for an investment fund structured to grow and sustain itself over time, providing scholarship funding in perpetuity rather than as a one-time payout.</p>
+      </details>
+      <details class="faq-card">
+        <summary>How can I apply if I'm a student?</summary>
+        <p>Applications will open ahead of the 2027 Michigan State Competition. Check back here or follow our updates for details on the application timeline and requirements.</p>
+      </details>
+      <details class="faq-card">
+        <summary>How can I get involved if I don't have FLL sets to donate?</summary>
+        <p>Reach out below! We're always looking for volunteers, mentors, and partners to help spread the word or support the fund in other ways.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="glow-field" aria-hidden="true">
+    <div class="glow-orb a" style="width:300px;height:300px;top:-10%;left:8%;background:var(--jasmine);"></div>
+    <div class="glow-orb b" style="width:280px;height:280px;bottom:-10%;right:10%;background:var(--pearl-aqua);"></div>
+  </div>
+  <div class="wrap-narrow" style="position:relative;">
+    <p class="kicker">Get Involved</p>
+    <h2 class="text-3d-light">Have old FLL sets sitting in storage?</h2>
+    <span class="underline center"></span>
+    <p>Reach out and let's talk about donating your team's retired sets every call helps grow the fund.</p>
+    <div class="contact-card reveal">
+      <div class="contact-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span>Connor Cook : <a href="tel:+12486573745">248-657-3745</a></span>
+      </div>
+      <div class="contact-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+        <span><a href="mailto:cook.connor.p@gmail.com">cook.connor.p@gmail.com</a></span>
+      </div>
+    </div>
+    <button class="contact-cta glow-sweep pulse-btn" data-target="mailto:cook.connor.p@gmail.com">
+      Get in touch
+      <span class="click-pulse"><span></span></span>
+      <span class="flash-burst"></span>
+    </button>
+  </div>
+</section>
+
+<footer>
+  <div class="glow-field" aria-hidden="true">
+    <div class="glow-orb c" style="width:260px;height:260px;top:-30%;left:20%;background:var(--princeton-orange);"></div>
+    <div class="glow-orb a" style="width:240px;height:240px;bottom:-40%;right:15%;background:var(--pearl-aqua);"></div>
+  </div>
+  <div class="footer-inner">
+    <div class="footer-brand text-3d-light">Bricks Scholarships</div>
+    <div class="footer-links">
+      <a href="#mission">Mission</a>
+      <a href="#story">Our Story</a>
+      <a href="#team">Team</a>
+      <a href="#donate">Donate</a>
+      <a href="#apply">Applications</a>
+      <a href="#volunteer">Volunteer</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </div>
+    <div class="footer-fine">
+      &copy; 2026 Bricks Scholarships. A network of FIRST alumni. Building the next chapter, one forgotten brick at a time.
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var revealEls = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      revealEls.forEach(function(el){ el.classList.add('is-visible'); });
+    } else {
+      var observer = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+      revealEls.forEach(function(el){ observer.observe(el); });
+    }
+  })();
+
+  (function(){
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var cards = document.querySelectorAll('.tilt-card, .member-card');
+    cards.forEach(function(card){
+      card.addEventListener('mousemove', function(e){
+        var r = card.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width - 0.5;
+        var y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = 'rotateY(' + (x * 8) + 'deg) rotateX(' + (y * -8) + 'deg) translateY(-2px)';
+      });
+      card.addEventListener('mouseleave', function(){
+        card.style.transform = '';
+      });
+    });
+  })();
+
+  (function(){
+    var buttons = document.querySelectorAll('.pulse-btn');
+    buttons.forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        var pulse = btn.querySelector('.click-pulse span');
+        var flash = btn.querySelector('.flash-burst');
+        if (pulse){
+          pulse.classList.remove('firing');
+          void pulse.offsetWidth;
+          pulse.classList.add('firing');
+        }
+        if (flash){
+          flash.classList.remove('firing');
+          void flash.offsetWidth;
+          flash.classList.add('firing');
+        }
+        var target = btn.getAttribute('data-target');
+        if (target){
+          if (target.indexOf('mailto:') === 0){
+            window.location.href = target;
+          } else {
+            var el = document.querySelector(target);
+            if (el){
+              setTimeout(function(){ el.scrollIntoView({behavior:'smooth'}); }, 150);
+            }
+          }
+        }
+      });
+    });
+  })();
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { TDSLoader } from 'three/addons/loaders/TDSLoader.js';
+
+  function setupBrickViewer(container, config) {
+    if (!container) return;
+    config = config || {};
+    try {
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(
+        config.fov || 35,
+        (container.clientWidth || 1) / (container.clientHeight || 1),
+        0.1,
+        1000
+      );
+      camera.position.set(0, config.camY != null ? config.camY : 0.4, config.camZ || 6);
+
+      var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(container.clientWidth || 1, container.clientHeight || 1);
+      container.appendChild(renderer.domElement);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+      var key = new THREE.DirectionalLight(0xffffff, 1.2);
+      key.position.set(3, 5, 4);
+      scene.add(key);
+      var fill = new THREE.DirectionalLight(0xffb066, 0.6);
+      fill.position.set(-4, -1, -3);
+      scene.add(fill);
+
+      var wrapper = new THREE.Group();
+      scene.add(wrapper);
+
+      var loader = new TDSLoader();
+      loader.load('./legoBrick.3ds', function (object) {
+        var box = new THREE.Box3().setFromObject(object);
+        var size = new THREE.Vector3();
+        box.getSize(size);
+        var center = new THREE.Vector3();
+        box.getCenter(center);
+        object.position.sub(center);
+
+        var maxDim = Math.max(size.x, size.y, size.z) || 1;
+        var scale = (config.fitSize || 3.4) / maxDim;
+        object.scale.setScalar(scale);
+
+        object.traverse(function (child) {
+          if (child.isMesh) {
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0xff8811,
+              roughness: 0.32,
+              metalness: 0.08
+            });
+          }
+        });
+
+        wrapper.add(object);
+        wrapper.rotation.x = config.tiltX != null ? config.tiltX : -0.32;
+
+        if (config.onLoaded) config.onLoaded();
+
+        var t = 0;
+        function animate() {
+          requestAnimationFrame(animate);
+          if (!reduceMotion) {
+            wrapper.rotation.y += (config.spinSpeed || 0.006);
+            if (config.float) {
+              t += 0.012;
+              wrapper.position.y = Math.sin(t) * (config.floatAmount || 0.18);
+            }
+          }
+          renderer.render(scene, camera);
+        }
+        animate();
+      }, undefined, function (err) {
+        console.warn('Bricks Scholarships: could not load legoBrick.3ds for a viewer.', err);
+        if (config.onError) config.onError();
+      });
+
+      window.addEventListener('resize', function () {
+        if (!container.clientWidth || !container.clientHeight) return;
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
+    } catch (err) {
+      console.warn('Bricks Scholarships: 3D viewer unavailable for a container.', err);
+      if (config.onError) config.onError();
+    }
+  }
+
+  // Hero brick — large, rotating, gently floating. Falls back to the CSS brick on failure.
+  setupBrickViewer(document.getElementById('brick-3d'), {
+    fitSize: 3.4,
+    tiltX: -0.32,
+    spinSpeed: 0.006,
+    float: true,
+    floatAmount: 0.18,
+    camZ: 6,
+    camY: 0.4,
+    fov: 35,
+    onLoaded: function () {
+      var fallback = document.querySelector('.hero-3d .cube3d');
+      if (fallback) fallback.style.display = 'none';
+    },
+    onError: function () {
+      var el = document.getElementById('brick-3d');
+      if (el) el.style.display = 'none';
+    }
+  });
+
+  // Nav logo brick — small, slow constant spin, no float (keeps it steady in the nav bar).
+  setupBrickViewer(document.getElementById('nav-brick-3d'), {
+    fitSize: 2.4,
+    tiltX: -0.28,
+    spinSpeed: 0.01,
+    float: false,
+    camZ: 4.4,
+    camY: 0.25,
+    fov: 28,
+    onError: function () {
+      var el = document.getElementById('nav-brick-3d');
+      if (el) el.style.display = 'none';
+    }
+  });
+</script>
+</body>
+</html>
