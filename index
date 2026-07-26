@@ -1655,7 +1655,8 @@
       scene.add(wrapper);
 
       var loader = new TDSLoader();
-      loader.load('./legoBrick.3ds', function (object) {
+
+      function handleModel(object) {
         var box = new THREE.Box3().setFromObject(object);
         var size = new THREE.Vector3();
         box.getSize(size);
@@ -1695,10 +1696,34 @@
           renderer.render(scene, camera);
         }
         animate();
-      }, undefined, function (err) {
+      }
+
+      // Load via XMLHttpRequest + loader.parse() rather than loader.load()/fetch().
+      // Some preview/sandbox environments intercept fetch() and throw
+      // "DataCloneError: Failed to execute 'postMessage' on 'Window'" when a
+      // Request object can't be relayed through postMessage. Plain XHR sidesteps that.
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', './legoBrick.3ds', true);
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function () {
+        if (xhr.status === 200 || xhr.status === 0) {
+          try {
+            var object = loader.parse(xhr.response, '');
+            handleModel(object);
+          } catch (parseErr) {
+            console.warn('Bricks Scholarships: could not parse legoBrick.3ds for a viewer.', parseErr);
+            if (config.onError) config.onError();
+          }
+        } else {
+          console.warn('Bricks Scholarships: legoBrick.3ds request failed with status ' + xhr.status);
+          if (config.onError) config.onError();
+        }
+      };
+      xhr.onerror = function (err) {
         console.warn('Bricks Scholarships: could not load legoBrick.3ds for a viewer.', err);
         if (config.onError) config.onError();
-      });
+      };
+      xhr.send();
 
       window.addEventListener('resize', function () {
         if (!container.clientWidth || !container.clientHeight) return;
