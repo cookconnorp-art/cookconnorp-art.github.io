@@ -238,28 +238,38 @@
   var LEGO_LARGE='/bricks-scholarships-site/cookconnorp-art.github.io-main/lego-large.png';
 
   var root=document.documentElement;
-  function hasTransparency(img){
+  /* Reads the drawing, checks it has a transparent background, and trims off any empty
+     space around the brick, so the files work however much border they were saved with.
+     Returns {url, w, h} for the trimmed brick, or null if there is no shape to use. */
+  function trimDrawing(img){
     try{
-      var c=document.createElement('canvas'),w=Math.min(img.naturalWidth,200),h=Math.max(1,Math.round(w*img.naturalHeight/img.naturalWidth));
-      c.width=w;c.height=h;var x=c.getContext('2d');x.drawImage(img,0,0,w,h);
-      var d=x.getImageData(0,0,w,h).data,clear=0;
-      for(var i=3;i<d.length;i+=4){if(d[i]<128)clear++;}
-      return clear>w*h*0.02;              // at least a little of the picture is see-through
-    }catch(e){return false;}              // could not check (e.g. opened as a local file)
+      var W=img.naturalWidth,H=img.naturalHeight,c=document.createElement('canvas');
+      c.width=W;c.height=H;var x=c.getContext('2d');x.drawImage(img,0,0);
+      var d=x.getImageData(0,0,W,H).data,clear=0,minX=W,minY=H,maxX=-1,maxY=-1;
+      for(var yy=0;yy<H;yy++)for(var xx=0;xx<W;xx++){
+        if(d[(yy*W+xx)*4+3]<128){clear++;continue;}
+        if(xx<minX)minX=xx;if(xx>maxX)maxX=xx;if(yy<minY)minY=yy;if(yy>maxY)maxY=yy;
+      }
+      if(clear<W*H*0.02||maxX<0)return null;       // nothing see-through: no brick shape in the file
+      var w=maxX-minX+1,h=maxY-minY+1,t=document.createElement('canvas');
+      t.width=w;t.height=h;t.getContext('2d').drawImage(c,minX,minY,w,h,0,0,w,h);
+      return {url:t.toDataURL('image/png'),w:w,h:h};
+    }catch(e){return null;}                        // could not read it (e.g. opened as a local file)
   }
   var loaded={};
   function useDrawing(key,url,arVar){
     var img=new Image();
     img.onload=function(){
-      if(!hasTransparency(img)){
+      var t=trimDrawing(img);
+      if(!t){
         if(window.console)console.warn('404 page: '+url+' has no transparent background, so the built-in LEGO shape is used.');
         return;
       }
-      loaded[key]=img;
-      root.style.setProperty(key,'url("'+url+'")');
-      root.style.setProperty(arVar,img.naturalWidth/img.naturalHeight);
+      loaded[key]=t;
+      root.style.setProperty(key,'url("'+t.url+'")');
+      root.style.setProperty(arVar,t.w/t.h);
       if(loaded['--lego-small']&&loaded['--lego-large'])
-        root.style.setProperty('--large-w',loaded['--lego-large'].naturalWidth/loaded['--lego-small'].naturalWidth);
+        root.style.setProperty('--large-w',loaded['--lego-large'].w/loaded['--lego-small'].w);
       placeGapMark();
     };
     img.src=url;
