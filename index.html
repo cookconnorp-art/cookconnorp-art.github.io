@@ -727,12 +727,12 @@
           <div class="stat-label">Years of FLL &amp; FIRST Partnership, Ending 2026</div>
         </div>
         <div class="stat">
-          <div class="stat-num" data-count="750000000+">750,000,000</div>
+          <div class="stat-num" data-count="750000000" data-suffix="+">750,000,000+</div>
           <div class="stat-label">Estimated number of FLL LEGO pieces lost in storage closets</div>
         </div>
         <div class="stat">
-          <div class="stat-num" data-count="	$113396" data-from="$25000" data-plain>2027</div>
-          <div class="stat-label">Average cost of in state college tutition over 4 years before aid</div>
+          <div class="stat-num" data-count="113396" data-from="25000" data-prefix="$">$113,396</div>
+          <div class="stat-label">Average cost of in-state college tuition over 4 years before aid</div>
         </div>
       </div>
     </div>
@@ -1244,12 +1244,21 @@
     revealEls.forEach(function(el){ revealObs.observe(el); });
   }
 
-  /* ---- stat count-up ---- */
+  /* ---- stat count-up ----
+     data-count  = the final number (digits only)
+     data-from   = where to start counting (optional, default 0)
+     data-prefix = text before the number, e.g. "$" (optional)
+     data-suffix = text after the number, e.g. "+" (optional)
+     data-plain  = no commas, e.g. for a year like 2027 (optional) */
   function countUp(el){
     var to = Number(el.getAttribute('data-count'));
     var from = Number(el.getAttribute('data-from') || 0);
+    if (isNaN(to)) return;               // bad number: leave the written text alone
+    if (isNaN(from)) from = 0;
     var plain = el.hasAttribute('data-plain');
-    var fmt = function(n){ return plain ? String(n) : n.toLocaleString('en-US'); };
+    var pre = el.getAttribute('data-prefix') || '';
+    var suf = el.getAttribute('data-suffix') || '';
+    var fmt = function(n){ return pre + (plain ? String(n) : n.toLocaleString('en-US')) + suf; };
     var dur = 1800, start = null;
     function tick(t){
       if (start === null) start = t;
