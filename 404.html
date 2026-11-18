@@ -10,6 +10,11 @@
 <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
 <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
 <style>
   :root{
     --princeton-orange:#ff8811;
@@ -19,6 +24,21 @@
     --space-indigo:#392f5a;
     --ink:var(--space-indigo);
     --bg:var(--floral-white);
+    --serif:'Instrument Serif','Iowan Old Style','Palatino Linotype',Georgia,serif;
+    --sans:'Geist','Helvetica Neue',Arial,sans-serif;
+
+    /* ---- the LEGO drawings ----
+       Images live in the site folder. lego.png is the single brick, lego-large.png the long one.
+       Both should be white with a transparent background; the colours are added on the page. */
+    --lego-small:url('/bricks-scholarships-site/cookconnorp-art.github.io-main/lego.png');
+    --lego-large:url('/bricks-scholarships-site/cookconnorp-art.github.io-main/lego-large.png');
+    --u:min(112px,24vw);          /* width of one small brick */
+    --small-ar:1.415;             /* width / height of lego.png (measured again when it loads) */
+    --large-ar:2.674;             /* width / height of lego-large.png */
+    --large-w:1.876;              /* lego-large.png width ÷ lego.png width */
+
+    /* the shadow, matching the 404 drawing: flat grey, straight down */
+    --brick-shadow:drop-shadow(0 6px 0 rgba(0,0,0,.235));
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
@@ -26,13 +46,14 @@
     display:flex;flex-direction:column;
     background:var(--bg);
     color:var(--ink);
-    font-family:'Inter','Helvetica Neue',Arial,sans-serif;
+    font-family:var(--sans);
     line-height:1.6;
     overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
   }
 
   /* drifting glow orbs, same as the homepage */
-  .glow-field{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+  .glow-field{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:-1;}
   .glow-orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;}
   .glow-orb.a{width:340px;height:340px;top:-8%;left:-6%;background:var(--jasmine);animation:drift1 14s ease-in-out infinite;}
   .glow-orb.b{width:300px;height:300px;bottom:-10%;right:-4%;background:var(--pearl-aqua);animation:drift2 18s ease-in-out infinite;}
@@ -41,73 +62,76 @@
   @keyframes drift2{0%,100%{transform:translate(0,0);}33%{transform:translate(-50px,40px);}66%{transform:translate(40px,-25px);}}
   @keyframes drift3{0%,100%{transform:translate(0,0);}50%{transform:translate(35px,50px);}}
 
-  header{position:relative;z-index:1;padding:1.5rem;display:flex;justify-content:center;}
+  header{position:relative;padding:1.5rem;display:flex;justify-content:center;}
   .brand{
     display:inline-flex;align-items:center;gap:.65rem;
     color:var(--ink);text-decoration:none;
-    font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;letter-spacing:.01em;
+    font-weight:700;letter-spacing:.01em;
   }
   .brand img{width:38px;height:38px;object-fit:contain;border-radius:8px;}
 
   main{
-    position:relative;z-index:1;flex:1;
+    position:relative;flex:1;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;padding:1rem 1.5rem 3rem;
   }
 
-  /* the wall with one missing brick */
+  /* ---------- the wall with one missing brick ---------- */
   .wall{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
-    width:min(340px,80vw);
-    margin:3.5rem 0 2rem;
     position:relative;
+    display:flex;flex-direction:column;align-items:center;
+    margin:4.5rem 0 1.75rem;
   }
+  .row{display:flex;gap:6px;justify-content:center;filter:var(--brick-shadow);}  /* shadow on the row, so it always falls straight down */
+  .row + .row{margin-top:calc(var(--u) * -0.1);}   /* studs tuck under the row above */
+
   .brick{
-    position:relative;
-    height:54px;
-    border-radius:8px;
-    background:var(--space-indigo);
-    box-shadow:0 5px 0 rgba(0,0,0,.22);
+    display:block;flex:none;position:relative;
+    width:var(--u);aspect-ratio:var(--small-ar);
+    background-color:var(--c,var(--space-indigo));
+    /* a soft light-to-dark wash so the flat colour reads as plastic */
+    background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%,rgba(0,0,0,.12));
+    -webkit-mask:var(--lego-small) center / 100% 100% no-repeat;
+            mask:var(--lego-small) center / 100% 100% no-repeat;
   }
-  .brick::before,.brick::after{ /* studs */
-    content:'';position:absolute;top:-6px;width:16px;height:8px;border-radius:4px 4px 0 0;
-    background:inherit;
+  .brick.l{
+    width:calc(var(--u) * var(--large-w));aspect-ratio:var(--large-ar);
+    -webkit-mask-image:var(--lego-large);mask-image:var(--lego-large);
   }
-  .brick::before{left:22%;}
-  .brick::after{right:22%;}
-  .brick.o{background:var(--princeton-orange);}
-  .brick.j{background:var(--jasmine);}
-  .brick.a{background:var(--pearl-aqua);}
-  .brick.span2{grid-column:span 2;}
-  .brick.gap{
-    background:transparent;box-shadow:none;
-    border:3px dashed rgba(57,47,90,.35);
-  }
-  .brick.gap::before,.brick.gap::after{display:none;}
-  .brick.gap span{
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.6rem;color:rgba(57,47,90,.55);
+  /* colour variations */
+  .brick.indigo{--c:var(--space-indigo);}
+  .brick.night {--c:#2a2245;}
+  .brick.o     {--c:var(--princeton-orange);}
+  .brick.peach {--c:#ffb35c;}
+  .brick.j     {--c:var(--jasmine);}
+  .brick.a     {--c:var(--pearl-aqua);}
+  .brick.teal  {--c:#5fb8ad;}
+  .brick.white {--c:#ffffff;}
+
+  .brick.gap{--c:rgba(57,47,90,.13);background-image:none;}
+  .gap-mark{
+    position:absolute;display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:2rem;line-height:1;color:rgba(57,47,90,.55);
+    pointer-events:none;
   }
   /* the stray brick floating above the gap */
+  .stray-wrap{position:absolute;right:0;top:calc(var(--u) / var(--small-ar) * -0.95);filter:var(--brick-shadow);}
   .brick.stray{
-    position:absolute;top:-46px;right:0;transform-origin:center;width:calc((100% - 16px) / 3);
-    background:var(--princeton-orange);
     animation:float 3.2s ease-in-out infinite;
   }
   @keyframes float{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-12px) rotate(3deg);}}
 
+  /* ---------- the 404 drawing ---------- */
   .code{
-    font-family:'Space Grotesk',sans-serif;font-weight:800;
-    font-size:clamp(4rem,14vw,7.5rem);line-height:1;letter-spacing:-.02em;
-    color:var(--ink);
-    text-shadow:7px 7px 0 var(--princeton-orange),6px 6px 0 var(--princeton-orange);
-    margin-bottom:1rem;
+    display:block;
+    width:min(400px,78vw);height:auto;
+    margin:0 auto 1.4rem;
+    mix-blend-mode:multiply;            /* any white background in the image disappears into the page */
+    user-select:none;-webkit-user-drag:none;
   }
   h1{
-    font-family:'Space Grotesk',sans-serif;
-    font-size:clamp(1.4rem,3.5vw,2rem);margin-bottom:.6rem;
+    font-family:var(--serif);font-weight:400;
+    font-size:clamp(1.9rem,4.5vw,2.6rem);line-height:1.1;margin-bottom:.6rem;
   }
   p{max-width:34rem;opacity:.85;margin-bottom:1.75rem;}
 
@@ -123,10 +147,9 @@
   .btn:focus-visible{outline:3px solid var(--space-indigo);outline-offset:3px;}
 
   footer{
-    position:relative;z-index:1;text-align:center;
+    position:relative;text-align:center;
     padding:1.25rem 1.5rem;font-size:.85rem;opacity:.7;
   }
-
 
   /* ---------- interactive bricks ---------- */
   .wall .brick:not(.gap){cursor:pointer;}
@@ -139,9 +162,11 @@
   }
   .poke:hover,.poke:focus-visible{opacity:1;}
   .poke:focus-visible{outline:3px solid var(--space-indigo);outline-offset:4px;border-radius:4px;}
-  #layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:5;}
+  /* falling bricks live here; the shadow is on this layer, not on each brick,
+     so it stays pointing down however the brick spins */
+  #layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:5;filter:var(--brick-shadow);}
   .piece{
-    position:absolute;left:0;top:0;margin:0;
+    position:absolute !important;left:0;top:0;right:auto;margin:0;
     pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
     animation:none !important;transform-origin:50% 50%;will-change:transform;
   }
@@ -163,26 +188,33 @@
 
   <header>
     <a class="brand" href="/">
-      <img src="bricks-scholarships-site/cookconnorp-art.github.io-main/nav-logo.png" alt="">
+      <img src="/bricks-scholarships-site/cookconnorp-art.github.io-main/nav-logo.png" alt="">
       BricksScholarships.org
     </a>
   </header>
 
   <main>
     <div class="wall" aria-hidden="true">
-      <div class="brick"></div>
-      <div class="brick a"></div>
-      <div class="brick gap"><span>?</span></div>
-      <div class="brick j"></div>
-      <div class="brick o span2"></div>
-      <div class="brick a span2"></div>
-      <div class="brick"></div>
-      <div class="brick stray"></div>
+      <div class="row">
+        <i class="brick indigo"></i>
+        <i class="brick a"></i>
+        <i class="brick gap"></i>
+      </div>
+      <div class="row">
+        <i class="brick j"></i>
+        <i class="brick l o"></i>
+      </div>
+      <div class="row">
+        <i class="brick l teal"></i>
+        <i class="brick night"></i>
+      </div>
+      <span class="stray-wrap"><i class="brick o stray"></i></span>
+      <span class="gap-mark">?</span>
     </div>
 
     <button class="poke" id="knock" type="button">Go on, click one of the bricks!</button>
 
-    <div class="code">404</div>
+    <img class="code" src="/bricks-scholarships-site/cookconnorp-art.github.io-main/404.png" width="815" height="406" alt="404" draggable="false">
     <h1>This brick went missing.</h1>
     <p>The page you were looking for doesn&rsquo;t exist or has moved.</p>
 
@@ -199,6 +231,31 @@
   var wall=document.querySelector('.wall'),layer=document.getElementById('layer'),btn=document.getElementById('knock');
   if(!wall||!layer||!btn)return;
 
+  /* ---- fit the bricks to the real shape of the LEGO drawings ---- */
+  var root=document.documentElement;
+  function srcOf(v){var m=getComputedStyle(root).getPropertyValue(v).match(/url\(["']?([^"')]+)/);return m&&m[1];}
+  var small=new Image(),large=new Image();
+  function fit(){
+    if(small.naturalWidth){root.style.setProperty('--small-ar',small.naturalWidth/small.naturalHeight);}
+    if(large.naturalWidth){root.style.setProperty('--large-ar',large.naturalWidth/large.naturalHeight);}
+    if(small.naturalWidth&&large.naturalWidth){root.style.setProperty('--large-w',large.naturalWidth/small.naturalWidth);}
+    placeGapMark();
+  }
+  small.onload=large.onload=fit;
+  small.src=srcOf('--lego-small');large.src=srcOf('--lego-large');
+
+  // the "?" sits on the empty brick
+  var gap=wall.querySelector('.gap'),mark=wall.querySelector('.gap-mark');
+  function placeGapMark(){
+    if(!gap||!mark)return;
+    var w=wall.getBoundingClientRect(),g=gap.getBoundingClientRect();
+    mark.style.left=(g.left-w.left)+'px';mark.style.top=(g.top-w.top+g.height*0.12)+'px';
+    mark.style.width=g.width+'px';mark.style.height=g.height*0.88+'px';
+  }
+  placeGapMark();addEventListener('resize',placeGapMark);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(placeGapMark);
+
+  /* ---- falling-brick physics ---- */
   var G=1800, STEP=1/120, ITER=10, MU=0.5, SLOP=0.5;
   var pieces=[], statics=[], fallen=false, raf=0, lastT=0, acc=0, grab=null;
   var W=innerWidth, H=innerHeight;
@@ -216,10 +273,10 @@
       body(-t/2,H/2,t,H*6,true),
       body(W+t/2,H/2,t,H*6,true)
     ];
-    // the big 404 and the buttons are solid shelves
+    // the 404 drawing and the buttons are solid shelves
     document.querySelectorAll('.code,.actions .btn').forEach(function(el){
       var r=el.getBoundingClientRect();
-      var inset=el.classList.contains('code')?[10,18]:[0,0];
+      var inset=el.classList.contains('code')?[r.width*0.03,r.height*0.05]:[0,0];
       statics.push(body(r.left+r.width/2,r.top+r.height/2,r.width-inset[0]*2,r.height-inset[1]*2,true));
     });
   }
@@ -263,7 +320,6 @@
   }
   function step(dt){
     var i,j;
-    // gravity + mouse spring
     for(i=0;i<pieces.length;i++){var b=pieces[i];b.vy+=G*dt;}
     if(grab){
       var g=grab,b=g.b,c=Math.cos(b.a),s=Math.sin(b.a);
@@ -271,13 +327,12 @@
       var ex=g.tx-(b.x+rx),ey=g.ty-(b.y+ry);
       var vax=b.vx-b.w*ry,vay=b.vy+b.w*rx;
       var K=260,D=22;
-      var fx=K*ex-D*vax,fy=K*ey-D*vay;       // per unit mass
+      var fx=K*ex-D*vax,fy=K*ey-D*vay;
       var m=1/b.im;
       b.vx+=fx*dt;b.vy+=fy*dt;
       b.w+=(rx*fy-ry*fx)*m*b.ii*dt;
       var sp=Math.hypot(b.vx,b.vy);if(sp>2600){b.vx*=2600/sp;b.vy*=2600/sp;}
     }
-    // contacts
     var cons=[],all=pieces.concat(statics);
     for(i=0;i<pieces.length;i++){
       for(j=i+1;j<all.length;j++){
@@ -304,13 +359,11 @@
         var k=cons[i],n=k.n,t=[-n[1],n[0]];
         for(j=0;j<k.pts.length;j++){
           var p=k.pts[j];
-          // normal
           var rv=relVel(k.A,k.B,p);
           var vn=rv[0]*n[0]+rv[1]*n[1];
           var l=(p.bias-vn)/p.kn,old=p.jn;
           p.jn=Math.max(old+l,0);l=p.jn-old;
           push(k.A,k.B,p,n[0]*l,n[1]*l);
-          // friction
           rv=relVel(k.A,k.B,p);
           var vt=rv[0]*t[0]+rv[1]*t[1];
           var lt=-vt/p.kt,oldt=p.jt,mx=MU*p.jn;
@@ -319,7 +372,6 @@
         }
       }
     }
-    // integrate + settle
     for(i=0;i<pieces.length;i++){
       var b=pieces[i];
       b.x+=b.vx*dt;b.y+=b.vy*dt;b.a+=b.w*dt;
@@ -354,7 +406,7 @@
       var o=bricks[i],r=o.getBoundingClientRect();
       var w=o.offsetWidth,h=o.offsetHeight;
       var b=body(r.left+r.width/2,r.top+r.height/2,w,h,false);
-      var el=document.createElement('div');
+      var el=document.createElement('i');
       el.className=o.className+' piece';
       el.style.width=w+'px';el.style.height=h+'px';
       b.el=el;layer.appendChild(el);
@@ -379,8 +431,7 @@
     var dx=e.clientX-b.x,dy=e.clientY-b.y,c=Math.cos(b.a),s=Math.sin(b.a);
     grab={b:b,id:e.pointerId,lx:dx*c+dy*s,ly:-dx*s+dy*c,tx:e.clientX,ty:e.clientY};
     b.el.classList.add('held');
-    // bring to front
-    layer.appendChild(b.el);
+    layer.appendChild(b.el);   // bring to front
   }
   function onMove(e){if(grab&&e.pointerId===grab.id){grab.tx=e.clientX;grab.ty=e.clientY;}}
   function onUp(e){
@@ -398,10 +449,10 @@
     if(!o||o.classList.contains('gap')||fallen)return;
     knock();
     var p=null;
-    for(var i=0;i<pieces.length;i++){if(pieces[i].el.className.indexOf('stray')<0||true){
+    for(var i=0;i<pieces.length;i++){
       var b=pieces[i],r=b.el.getBoundingClientRect();
       if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){p=b;}
-    }}
+    }
     if(p){
       var dx=e.clientX-p.x,dy=e.clientY-p.y;
       grab={b:p,id:e.pointerId,lx:dx,ly:dy,tx:e.clientX,ty:e.clientY};
