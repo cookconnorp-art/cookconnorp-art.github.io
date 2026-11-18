@@ -12,10 +12,14 @@
 <meta property="og:title" content="Bricks Scholarships | A college fund, built from forgotten bricks">
 <meta property="og:description" content="A network of FIRST alumni turning donated LEGO robotics sets into a self-sustaining scholarship fund for graduating FIRST students.">
 <meta property="og:url" content="https://brickscholarships.org/">
-<meta property="og:image" content="https://brickscholarships.org/bricks-scholarships-site/cookconnorp-art.github.io-main/og-image.jpg">
+<!-- The picture shown when the link is shared. To change it, replace sharescreen.jpg
+     (best size 1200 x 630 pixels) in the bricks-scholarships-site/cookconnorp-art.github.io-main folder. -->
+<meta property="og:image" content="https://brickscholarships.org/bricks-scholarships-site/cookconnorp-art.github.io-main/sharescreen.jpg">
+<meta property="og:image:alt" content="Bricks Scholarships: a college fund, built from forgotten bricks">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://brickscholarships.org/bricks-scholarships-site/cookconnorp-art.github.io-main/sharescreen.jpg">
 
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="bricks-scholarships-site/cookconnorp-art.github.io-main/favicon-32x32.png" sizes="32x32">
@@ -420,18 +424,19 @@
   .accept-strip{
     position:relative;overflow:hidden;
     padding:14px 0 22px;
+    touch-action:pan-y;            /* up/down still scrolls the page; side to side moves the strip */
+    cursor:grab;user-select:none;-webkit-user-select:none;
     -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
             mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);
   }
   .accept-track{
     display:flex;gap:18px;width:max-content;list-style:none;
     padding-left:18px;
-    animation:accept-scroll var(--accept-speed,48s) linear infinite;
+    will-change:transform;
   }
-  .accept-strip:hover .accept-track,
-  .accept-strip:focus-within .accept-track,
-  .accept-strip.paused .accept-track{animation-play-state:paused;}
-  @keyframes accept-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  .accept-strip.dragging{cursor:grabbing;}
+  .accept-strip.dragging .accept-card{transition:none;}
+  .accept-card img,.accept-art .icon{-webkit-user-drag:none;pointer-events:none;}
 
   .accept-card{
     position:relative;flex:none;
@@ -500,12 +505,7 @@
     .accept-card{width:210px;height:270px;}
     .accept-art .icon{width:68px;height:68px;}
   }
-  /* no motion: a plain row you can swipe or scroll */
-  @media (prefers-reduced-motion:reduce){
-    .accept-strip{overflow-x:auto;-webkit-mask-image:none;mask-image:none;}
-    .accept-track{animation:none !important;padding-right:18px;}
-    .accept-track [data-clone]{display:none;}
-  }
+  /* (with reduced motion turned on, the strip does not move by itself, but can still be scrolled or swiped) */
 
   /* ---------- applications (soft jasmine panel) ---------- */
   .apply{
@@ -567,6 +567,35 @@
   details.faq-card summary .icon{color:var(--princeton-orange);transition:transform .25s ease;}
   details.faq-card[open] summary .icon{transform:rotate(180deg);}
   details.faq-card p{margin:0 1.5rem 1.4rem;max-width:64ch;color:var(--ink-soft);font-size:0.98rem;}
+
+  /* ---------- newsletter ---------- */
+  .newsletter{
+    color:var(--floral-white);
+    background:
+      radial-gradient(40rem 22rem at 100% 100%, rgba(255,136,17,.22), transparent 60%),
+      radial-gradient(30rem 20rem at 0% 0%, rgba(157,217,210,.14), transparent 60%),
+      linear-gradient(165deg,var(--space-indigo),var(--indigo-deep));
+    margin-bottom:clamp(4.5rem,9vw,7rem);
+  }
+  .newsletter-grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:3.5rem;align-items:center;}
+  .newsletter h2{max-width:15ch;}
+  .newsletter h2 em{color:var(--jasmine);}
+  .newsletter .lede{color:rgba(255,248,240,.8);}
+  .newsletter-points{list-style:none;margin-top:1.75rem;display:grid;gap:0.7rem;}
+  .newsletter-points li{display:flex;align-items:flex-start;gap:0.7rem;color:rgba(255,248,240,.88);font-size:0.97rem;}
+  .newsletter-points .icon{color:var(--jasmine);margin-top:2px;}
+  .newsletter-form{
+    background:var(--floral-white);color:var(--space-indigo);
+    border-radius:22px;padding:clamp(1.5rem,3vw,2.25rem);
+    display:grid;gap:1rem;
+    box-shadow:0 30px 50px -30px rgba(0,0,0,.6);
+  }
+  .newsletter-form .form-title{font-family:var(--serif);font-size:1.7rem;line-height:1.1;}
+  .newsletter-form label{display:grid;gap:0.4rem;font-size:0.85rem;font-weight:600;}
+  .newsletter-form .btn{width:100%;}
+  .newsletter-form .fine{font-size:0.8rem;color:var(--ink-soft);text-align:center;}
+  .newsletter-form .form-status{margin:0;text-align:center;color:var(--ink-soft);}
+  @media (max-width:900px){ .newsletter-grid{grid-template-columns:1fr;gap:2.25rem;} }
 
   /* ---------- share with a friend ---------- */
   .share{padding-top:0;}
@@ -643,7 +672,9 @@
   <symbol id="i-landmark" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V10M19 21V10M9.5 21V10M14.5 21V10"/><path d="M12 3 3 8h18z"/></symbol>
   <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/><path d="M10 10h4v4h-4z"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol>
   <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20"/><path d="M4 15l-2 4M20 15l2 4"/></symbol>
-  <symbol id="i-arrow"viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-news" viewBox="0 0 24 24"><path d="M4 4h13v16H6a2 2 0 0 1-2-2z"/><path d="M17 8h3v10a2 2 0 0 1-2 2"/><path d="M8 8h5M8 12h5M8 16h3"/></symbol>
   <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
 </svg>
 
@@ -1062,6 +1093,33 @@
   </div>
 </section>
 
+<section class="newsletter panel on-dark" id="newsletter">
+  <div class="wrap newsletter-grid">
+    <div class="reveal">
+      <p class="kicker">Monthly Newsletter</p>
+      <h2>Stay in the loop, <em>one email a month</em>.</h2>
+      <p class="lede">Get a short monthly update on where the bricks are going, how the fund is growing, and what's coming next for scholarship applications.</p>
+      <ul class="newsletter-points">
+        <li><svg class="icon"><use href="#i-check"/></svg>Donation pickups and the teams behind them</li>
+        <li><svg class="icon"><use href="#i-check"/></svg>Progress on the fund and the 2027 scholarships</li>
+        <li><svg class="icon"><use href="#i-check"/></svg>Ways to get involved, from volunteering to spreading the word</li>
+      </ul>
+    </div>
+    <form class="newsletter-form reveal d1" id="newsletterForm" data-subject="Newsletter signup" data-success="You're on the list! Look for our next update at the start of the month.">
+      <div class="form-title">Join the newsletter</div>
+      <label>First name
+        <input type="text" name="name" autocomplete="given-name" placeholder="Optional">
+      </label>
+      <label>Email
+        <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required>
+      </label>
+      <button class="btn btn-primary" type="submit"><svg class="icon"><use href="#i-news"/></svg>Subscribe</button>
+      <p class="fine">One email a month. Unsubscribe anytime.</p>
+      <p class="form-status" role="status"></p>
+    </form>
+  </div>
+</section>
+
 <section class="share" id="share">
   <div class="wrap-narrow">
     <div class="card share-card reveal">
@@ -1141,6 +1199,7 @@
         <a href="#apply">Applications</a>
         <a href="#volunteer">Volunteer</a>
         <a href="#faq">FAQ</a>
+        <a href="#newsletter">Newsletter</a>
         <a href="#share">Share</a>
         <a href="#contact">Contact</a>
       </div>
@@ -1161,6 +1220,10 @@
      the forms open the visitor's email app with the message filled in.
      ============================================================ */
   var FORM_ENDPOINT = '';
+  /* NEWSLETTER_ENDPOINT: the signup URL from your newsletter service
+     (for example a Formspree form, or Buttondown/Mailchimp). Leave it
+     empty to fall back to FORM_ENDPOINT, or to email if both are empty. */
+  var NEWSLETTER_ENDPOINT = '';
   var CONTACT_EMAIL = 'brickscholarships.org@gmail.com';
   var SHARE_URL = 'https://brickscholarships.org/';
   var SHARE_TEXT = 'Bricks Scholarships turns retired FLL robotics sets into a scholarship fund for graduating FIRST students.';
@@ -1226,8 +1289,8 @@
       if (sec && sec.getBoundingClientRect().top <= line) current = i;
     });
     var contact = document.getElementById('contact');
-    var share = document.getElementById('share');
-    if ((contact && contact.getBoundingClientRect().top <= line) || (share && share.getBoundingClientRect().top <= line)) current = -1;
+    var newsletter = document.getElementById('newsletter');
+    if (newsletter && newsletter.getBoundingClientRect().top <= line) current = -1;
     pillLinks.forEach(function(a, i){
       var on = i === current;
       a.classList.toggle('active', on);
@@ -1265,7 +1328,9 @@
   window.addEventListener('load', setupBios);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(setupBios);
 
-  /* ---- what we accept: endless carousel ---- */
+  /* ---- what we accept: endless carousel ----
+     Moves by itself, pauses while the cursor is over it, and can be pushed
+     side to side with a trackpad, Shift + mouse wheel, by dragging, or by swiping. */
   (function(){
     var strip = document.getElementById('acceptStrip');
     var track = document.getElementById('acceptTrack');
@@ -1273,7 +1338,7 @@
     var hint = document.getElementById('acceptHint');
     var hintText = document.getElementById('acceptHintText');
     var touchOnly = window.matchMedia('(hover: none)').matches;
-    if (touchOnly && hintText) hintText.textContent = 'Tap a card to pause and learn more';
+    if (hintText) hintText.textContent = touchOnly ? 'Swipe to browse, tap a card to learn more' : 'Hover to pause, scroll sideways to browse';
 
     // a second copy of the cards makes the loop seamless; it is hidden from screen readers and Tab
     var originals = Array.prototype.slice.call(track.children);
@@ -1284,38 +1349,117 @@
       copy.setAttribute('tabindex', '-1');
       track.appendChild(copy);
     });
+    var firstCopy = track.children[originals.length];
 
-    // keep the speed steady whatever the screen size (about 45 pixels a second)
-    function setSpeed(){
-      var half = track.scrollWidth / 2;
-      track.style.setProperty('--accept-speed', Math.max(20, half / 45) + 's');
+    var SPEED = 45;             // pixels per second when moving by itself
+    var offset = 0, velocity = 0, period = 1;
+    var hovering = false, focused = false, drag = null, suppressClick = false;
+
+    function measure(){ period = Math.max(1, firstCopy.offsetLeft - originals[0].offsetLeft); }
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('load', measure);
+
+    function isPaused(){ return hovering || focused || drag || strip.classList.contains('paused') || reduceMotion; }
+    function setHint(){ if (hint) hint.classList.toggle('paused', isPaused() && !reduceMotion); }
+
+    var last = null;
+    function frame(t){
+      var dt = last === null ? 0 : Math.min(0.05, (t - last) / 1000);
+      last = t;
+      if (!drag) {
+        if (!isPaused()) offset += SPEED * dt;
+        if (Math.abs(velocity) > 0.5) {            // glide after a swipe or flick, then settle
+          offset += velocity * dt;
+          velocity *= Math.pow(0.04, dt);
+        } else velocity = 0;
+      }
+      offset = ((offset % period) + period) % period;
+      track.style.transform = 'translate3d(' + (-offset) + 'px,0,0)';
+      requestAnimationFrame(frame);
     }
-    setSpeed();
-    window.addEventListener('resize', setSpeed);
+    requestAnimationFrame(frame);
+
+    // trackpad side-to-side, or Shift + mouse wheel
+    strip.addEventListener('wheel', function(e){
+      var dx = e.deltaX;
+      if (!dx && e.shiftKey) dx = e.deltaY;
+      if (!dx || Math.abs(dx) < Math.abs(e.shiftKey ? 0 : e.deltaY)) return;   // mostly up/down: let the page scroll
+      e.preventDefault();
+      if (e.deltaMode === 1) dx *= 16;
+      offset += dx;
+      velocity = 0;
+    }, { passive: false });
+
+    // drag with the mouse, or swipe with a finger
+    strip.addEventListener('pointerdown', function(e){
+      if (e.button !== 0) return;
+      drag = { x: e.clientX, y: e.clientY, start: offset, lastX: e.clientX, lastT: e.timeStamp, v: 0, moved: false, id: e.pointerId };
+      velocity = 0;
+    });
+    strip.addEventListener('pointermove', function(e){
+      if (!drag || e.pointerId !== drag.id) return;
+      var dx = e.clientX - drag.x;
+      if (!drag.moved) {
+        if (Math.abs(dx) < 6) return;
+        if (Math.abs(e.clientY - drag.y) > Math.abs(dx)) { drag = null; return; }   // vertical: it's a page scroll
+        drag.moved = true;
+        strip.classList.add('dragging');
+        try { strip.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+      offset = drag.start - dx;
+      var dt = (e.timeStamp - drag.lastT) / 1000;
+      if (dt > 0) drag.v = -(e.clientX - drag.lastX) / dt;
+      drag.lastX = e.clientX; drag.lastT = e.timeStamp;
+    });
+    function endDrag(e){
+      if (!drag) return;
+      if (drag.moved) {
+        suppressClick = true;
+        setTimeout(function(){ suppressClick = false; }, 0);
+        velocity = Math.max(-2500, Math.min(2500, drag.v));
+        if (e && e.timeStamp - drag.lastT > 80) velocity = 0;   // held still before letting go: no glide
+      }
+      strip.classList.remove('dragging');
+      drag = null;
+      setHint();
+    }
+    strip.addEventListener('pointerup', endDrag);
+    strip.addEventListener('pointercancel', endDrag);
+    strip.addEventListener('lostpointercapture', function(){ if (drag && drag.moved) endDrag(); });
+
+    strip.addEventListener('mouseenter', function(){ hovering = true; setHint(); });
+    strip.addEventListener('mouseleave', function(){ hovering = false; setHint(); });
+    strip.addEventListener('focusin', function(){ focused = true; setHint(); });
+    strip.addEventListener('focusout', function(){ focused = false; setHint(); });
 
     function closeAll(){
       track.querySelectorAll('.accept-card.is-open').forEach(function(c){ c.classList.remove('is-open'); });
       strip.classList.remove('paused');
-      if (hint) hint.classList.remove('paused');
+      setHint();
     }
     // phones have no hover: a tap opens a card and pauses, a second tap or a tap elsewhere resumes
     track.addEventListener('click', function(e){
+      if (suppressClick) { e.preventDefault(); return; }
       var card = e.target.closest('.accept-card');
       if (!card || !touchOnly) return;
       var wasOpen = card.classList.contains('is-open');
       closeAll();
-      if (!wasOpen) {
-        card.classList.add('is-open');
-        strip.classList.add('paused');
-        if (hint) hint.classList.add('paused');
-      }
-    });
+      if (!wasOpen) { card.classList.add('is-open'); strip.classList.add('paused'); setHint(); }
+    }, true);
     document.addEventListener('click', function(e){ if (!strip.contains(e.target)) closeAll(); });
     document.addEventListener('keydown', function(e){
       if (e.key === 'Escape') { closeAll(); if (strip.contains(document.activeElement)) document.activeElement.blur(); }
     });
-    strip.addEventListener('mouseenter', function(){ if (hint) hint.classList.add('paused'); });
-    strip.addEventListener('mouseleave', function(){ if (hint && !strip.classList.contains('paused')) hint.classList.remove('paused'); });
+    // keyboard: keep the focused card in view
+    strip.addEventListener('focusin', function(e){
+      var card = e.target.closest('.accept-card');
+      if (!card) return;
+      var r = card.getBoundingClientRect(), s = strip.getBoundingClientRect();
+      if (r.left < s.left + 40) offset -= (s.left + 40 - r.left);
+      else if (r.right > s.right - 40) offset += (r.right - (s.right - 40));
+      strip.scrollLeft = 0;
+    });
   })();
 
   /* ---- "Ready to help?" preselects Volunteering in the form ---- */
@@ -1327,7 +1471,7 @@
   });
 
   /* ---- forms ---- */
-  function handleForm(form){
+  function handleForm(form, endpoint){
     if (!form) return;
     var status = form.querySelector('.form-status');
     form.addEventListener('submit', function(e){
@@ -1340,16 +1484,16 @@
       var subject = form.getAttribute('data-subject');
       data._subject = subject;
 
-      if (FORM_ENDPOINT) {
+      if (endpoint) {
         status.textContent = 'Sending…';
-        fetch(FORM_ENDPOINT, {
+        fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify(data)
         }).then(function(res){
           if (!res.ok) throw new Error('send failed');
           form.reset();
-          status.textContent = 'Thanks! We got it and will be in touch soon.';
+          status.textContent = form.getAttribute('data-success') || 'Thanks! We got it and will be in touch soon.';
         }).catch(function(){
           status.textContent = 'That did not go through. Please email ' + CONTACT_EMAIL + ' instead.';
         });
@@ -1359,8 +1503,9 @@
       }
     });
   }
-  handleForm(document.getElementById('contactForm'));
-  handleForm(document.getElementById('notifyForm'));
+  handleForm(document.getElementById('contactForm'), FORM_ENDPOINT);
+  handleForm(document.getElementById('notifyForm'), FORM_ENDPOINT);
+  handleForm(document.getElementById('newsletterForm'), NEWSLETTER_ENDPOINT || FORM_ENDPOINT);
 
   /* ---- share with a friend ---- */
   var shareStatus = document.getElementById('shareStatus');
