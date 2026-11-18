@@ -1338,7 +1338,7 @@
     var hint = document.getElementById('acceptHint');
     var hintText = document.getElementById('acceptHintText');
     var touchOnly = window.matchMedia('(hover: none)').matches;
-    if (hintText) hintText.textContent = touchOnly ? 'Swipe to browse, tap a card to learn more' : 'Hover to pause, scroll sideways to browse';
+    if (hintText) hintText.textContent = touchOnly ? 'Swipe to browse, tap a card to learn more' : '';
 
     // a second copy of the cards makes the loop seamless; it is hidden from screen readers and Tab
     var originals = Array.prototype.slice.call(track.children);
