@@ -27,11 +27,11 @@
     --serif:'Instrument Serif','Iowan Old Style','Palatino Linotype',Georgia,serif;
     --sans:'Geist','Helvetica Neue',Arial,sans-serif;
 
-    /* ---- the LEGO drawings ----
-       Images live in the site folder. lego.png is the single brick, lego-large.png the long one.
-       Both should be white with a transparent background; the colours are added on the page. */
-    --lego-small:url('/bricks-scholarships-site/cookconnorp-art.github.io-main/lego.png');
-    --lego-large:url('/bricks-scholarships-site/cookconnorp-art.github.io-main/lego-large.png');
+    /* ---- the LEGO shapes ----
+       These are the built-in brick shapes. The script below swaps in your drawings
+       (LEGO_SMALL and LEGO_LARGE) as soon as it finds they have a transparent background. */
+    --lego-small:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 201 142' preserveAspectRatio='none'%3E%3Crect x='0' y='28' width='201' height='114' rx='12'/%3E%3Crect x='25.2' y='0' width='50' height='36' rx='6'/%3E%3Crect x='125.8' y='0' width='50' height='36' rx='6'/%3E%3C/svg%3E");
+    --lego-large:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 377 141' preserveAspectRatio='none'%3E%3Crect x='0' y='28' width='377' height='113' rx='12'/%3E%3Crect x='23.6' y='0' width='47' height='36' rx='6'/%3E%3Crect x='117.9' y='0' width='47' height='36' rx='6'/%3E%3Crect x='212.1' y='0' width='47' height='36' rx='6'/%3E%3Crect x='306.4' y='0' width='47' height='36' rx='6'/%3E%3C/svg%3E");
     --u:min(112px,24vw);          /* width of one small brick */
     --small-ar:1.415;             /* width / height of lego.png (measured again when it loads) */
     --large-ar:2.674;             /* width / height of lego-large.png */
@@ -231,18 +231,41 @@
   var wall=document.querySelector('.wall'),layer=document.getElementById('layer'),btn=document.getElementById('knock');
   if(!wall||!layer||!btn)return;
 
-  /* ---- fit the bricks to the real shape of the LEGO drawings ---- */
+  /* ---- your LEGO drawings ----
+     White on a TRANSPARENT background. If a file is missing or has no transparent
+     background (so there is no brick shape to cut out), the built-in shape is used instead. */
+  var LEGO_SMALL='/bricks-scholarships-site/cookconnorp-art.github.io-main/lego.png';
+  var LEGO_LARGE='/bricks-scholarships-site/cookconnorp-art.github.io-main/lego-large.png';
+
   var root=document.documentElement;
-  function srcOf(v){var m=getComputedStyle(root).getPropertyValue(v).match(/url\(["']?([^"')]+)/);return m&&m[1];}
-  var small=new Image(),large=new Image();
-  function fit(){
-    if(small.naturalWidth){root.style.setProperty('--small-ar',small.naturalWidth/small.naturalHeight);}
-    if(large.naturalWidth){root.style.setProperty('--large-ar',large.naturalWidth/large.naturalHeight);}
-    if(small.naturalWidth&&large.naturalWidth){root.style.setProperty('--large-w',large.naturalWidth/small.naturalWidth);}
-    placeGapMark();
+  function hasTransparency(img){
+    try{
+      var c=document.createElement('canvas'),w=Math.min(img.naturalWidth,200),h=Math.max(1,Math.round(w*img.naturalHeight/img.naturalWidth));
+      c.width=w;c.height=h;var x=c.getContext('2d');x.drawImage(img,0,0,w,h);
+      var d=x.getImageData(0,0,w,h).data,clear=0;
+      for(var i=3;i<d.length;i+=4){if(d[i]<128)clear++;}
+      return clear>w*h*0.02;              // at least a little of the picture is see-through
+    }catch(e){return false;}              // could not check (e.g. opened as a local file)
   }
-  small.onload=large.onload=fit;
-  small.src=srcOf('--lego-small');large.src=srcOf('--lego-large');
+  var loaded={};
+  function useDrawing(key,url,arVar){
+    var img=new Image();
+    img.onload=function(){
+      if(!hasTransparency(img)){
+        if(window.console)console.warn('404 page: '+url+' has no transparent background, so the built-in LEGO shape is used.');
+        return;
+      }
+      loaded[key]=img;
+      root.style.setProperty(key,'url("'+url+'")');
+      root.style.setProperty(arVar,img.naturalWidth/img.naturalHeight);
+      if(loaded['--lego-small']&&loaded['--lego-large'])
+        root.style.setProperty('--large-w',loaded['--lego-large'].naturalWidth/loaded['--lego-small'].naturalWidth);
+      placeGapMark();
+    };
+    img.src=url;
+  }
+  useDrawing('--lego-small',LEGO_SMALL,'--small-ar');
+  useDrawing('--lego-large',LEGO_LARGE,'--large-ar');
 
   // the "?" sits on the empty brick
   var gap=wall.querySelector('.gap'),mark=wall.querySelector('.gap-mark');
@@ -415,6 +438,8 @@
       el.addEventListener('pointerdown',onDown);
       el._b=b;pieces.push(b);
     }
+    if(gap)gap.style.visibility='hidden';
+    if(mark)mark.style.visibility='hidden';
     btn.textContent='Click to rebuild it';
     start();render();
   }
@@ -422,6 +447,7 @@
     fallen=false;grab=null;cancelAnimationFrame(raf);
     pieces=[];layer.innerHTML='';
     wall.querySelectorAll('.brick').forEach(function(o){o.style.visibility='';});
+    if(mark)mark.style.visibility='';
     btn.textContent='Go on, click the bricks!';
   }
   function onDown(e){
