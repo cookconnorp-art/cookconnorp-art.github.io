@@ -431,6 +431,29 @@
   }
   function start(){cancelAnimationFrame(raf);lastT=performance.now();acc=0;raf=requestAnimationFrame(frame);}
 
+  /* after the wall falls, glide quickly down so "Back to the homepage" is in view */
+  var homeBtn=document.querySelector('.actions .btn.primary'),scrollAnim=0;
+  function scrollToHome(){
+    if(!homeBtn)return;
+    var r=homeBtn.getBoundingClientRect();
+    var target=Math.max(0,Math.min(
+      scrollY+r.bottom-innerHeight+Math.min(48,innerHeight*0.08),    // button sits just above the bottom edge
+      document.documentElement.scrollHeight-innerHeight));
+    var from=scrollY,dist=target-from;
+    if(Math.abs(dist)<4)return;                                       // already on screen
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){scrollTo(0,target);return;}
+    var dur=Math.min(520,Math.max(260,Math.abs(dist)*0.9)),t0=null;
+    cancelAnimationFrame(scrollAnim);
+    function stop(){cancelAnimationFrame(scrollAnim);removeEventListener('wheel',stop);removeEventListener('touchstart',stop);}
+    addEventListener('wheel',stop,{passive:true});addEventListener('touchstart',stop,{passive:true});   // visitor scrolls: let them
+    (function tick(t){
+      if(t0===null)t0=t;
+      var p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
+      scrollTo(0,from+dist*e);
+      if(p<1)scrollAnim=requestAnimationFrame(tick);else stop();
+    })(performance.now());
+  }
+
   function knock(){
     if(fallen)return;
     fallen=true;buildStatics();
@@ -452,6 +475,7 @@
     if(mark)mark.style.visibility='hidden';
     btn.textContent='Click to rebuild it';
     start();render();
+    scrollToHome();
   }
   function rebuild(){
     fallen=false;grab=null;cancelAnimationFrame(raf);
