@@ -533,6 +533,7 @@
   @media (max-width:480px){ .notify-row{flex-direction:column;} }
 
   /* ---------- forms ---------- */
+  .hp{position:absolute !important;left:-9999px;width:1px;height:1px;opacity:0;}   /* invisible field that only spam bots fill in */
   input,select,textarea{
     width:100%;
     font:inherit;font-size:0.95rem;color:var(--space-indigo);
@@ -642,6 +643,22 @@
   .footer-links a:hover,.footer-links a:focus-visible{color:var(--jasmine);}
   .footer-fine{color:rgba(255,248,240,.5);font-size:0.8rem;}
 </style>
+<!-- ---- Google Analytics (visitor counts, countries, cities) ----
+     Paste your Measurement ID (looks like G-XXXXXXXXXX) between the quotes.
+     Leave it empty and nothing loads. Use the same ID on index.html and 404.html. -->
+<script>
+  var GA_ID = 'G-09PEY6778P';
+  if (GA_ID) {
+    var gaTag = document.createElement('script');
+    gaTag.async = true;
+    gaTag.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(gaTag);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+  }
+</script>
 </head>
 <body>
 
@@ -993,10 +1010,11 @@
         <p>Show us the impact you want to make in your community.</p>
       </div>
     </div>
-    <form class="notify reveal" id="notifyForm" data-subject="Notify me about Bricks Scholarships applications">
+    <form class="notify reveal" id="notifyForm" data-list="Application updates" data-subject="Notify me about Bricks Scholarships applications" data-success="Thanks! We'll email you when applications open.">
       <label for="notifyEmail">Get notified when applications open</label>
       <div class="notify-row">
         <input type="email" id="notifyEmail" name="email" placeholder="you@example.com" autocomplete="email" required>
+        <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
         <button class="btn btn-dark" type="submit">Notify me</button>
       </div>
       <p class="form-status" role="status"></p>
@@ -1105,7 +1123,7 @@
         <li><svg class="icon"><use href="#i-check"/></svg>Ways to get involved, from volunteering to spreading the word</li>
       </ul>
     </div>
-    <form class="newsletter-form reveal d1" id="newsletterForm" data-subject="Newsletter signup" data-success="You're on the list! Look for our next update at the start of the month.">
+    <form class="newsletter-form reveal d1" id="newsletterForm" data-list="Newsletter" data-subject="Newsletter signup" data-success="You're on the list! Look for our next update at the start of the month.">
       <div class="form-title">Join the newsletter</div>
       <label>First name
         <input type="text" name="name" autocomplete="given-name" placeholder="Optional">
@@ -1113,6 +1131,7 @@
       <label>Email
         <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required>
       </label>
+      <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <button class="btn btn-primary" type="submit"><svg class="icon"><use href="#i-news"/></svg>Subscribe</button>
       <p class="fine">One email a month. Unsubscribe anytime.</p>
       <p class="form-status" role="status"></p>
@@ -1220,10 +1239,14 @@
      the forms open the visitor's email app with the message filled in.
      ============================================================ */
   var FORM_ENDPOINT = '';
+  /* SIGNUP_SHEET_URL: the web app URL from your Google Sheet's Apps Script
+     (looks like https://script.google.com/macros/s/.../exec). When set, newsletter
+     and "notify me" signups are added as rows to that sheet. */
+  var SIGNUP_SHEET_URL = 'https://script.google.com/macros/s/AKfycbztYlXzcXkTtFSO_mH9igA3-fj0PCY_Mga_HMQUZWmOSxuix0tkHnBbc2DKvmN6bmg/exec';
   /* NEWSLETTER_ENDPOINT: the signup URL from your newsletter service
      (for example a Formspree form, or Buttondown/Mailchimp). Leave it
      empty to fall back to FORM_ENDPOINT, or to email if both are empty. */
-  var NEWSLETTER_ENDPOINT = '';
+  var NEWSLETTER_ENDPOINT = 'https://script.google.com/macros/s/AKfycbztYlXzcXkTtFSO_mH9igA3-fj0PCY_Mga_HMQUZWmOSxuix0tkHnBbc2DKvmN6bmg/exec';
   var CONTACT_EMAIL = 'brickscholarships.org@gmail.com';
   var SHARE_URL = 'https://brickscholarships.org/';
   var SHARE_TEXT = 'Bricks Scholarships turns retired FLL robotics sets into a scholarship fund for graduating FIRST students.';
@@ -1488,12 +1511,35 @@
       var data = {}, lines = [];
       new FormData(form).forEach(function(value, key){
         data[key] = value;
-        if (value) lines.push(key.charAt(0).toUpperCase() + key.slice(1) + ': ' + value);
+        if (value && key !== 'website') lines.push(key.charAt(0).toUpperCase() + key.slice(1) + ': ' + value);
       });
       var subject = form.getAttribute('data-subject');
       data._subject = subject;
 
-      if (endpoint) {
+      if (data.website) return;                       // filled-in invisible field: a spam bot
+      var useSheet = SIGNUP_SHEET_URL && form.hasAttribute('data-list');
+
+      if (useSheet) {
+        // Google Sheet log: one row per signup (date, email, first name, list, page)
+        var params = new URLSearchParams();
+        params.append('email', data.email || '');
+        params.append('name', data.name || '');
+        params.append('list', form.getAttribute('data-list'));
+        params.append('page', location.pathname);
+        var btn = form.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
+        status.textContent = 'Signing you up…';
+        fetch(SIGNUP_SHEET_URL, { method: 'POST', mode: 'no-cors', body: params })
+          .then(function(){
+            form.reset();
+            status.textContent = form.getAttribute('data-success') || "Thanks! You're on the list.";
+            if (window.gtag) gtag('event', 'sign_up', { method: form.getAttribute('data-list') });
+          })
+          .catch(function(){
+            status.textContent = 'That did not go through. Please email ' + CONTACT_EMAIL + ' and we will add you.';
+          })
+          .then(function(){ if (btn) btn.disabled = false; });
+      } else if (endpoint) {
         status.textContent = 'Sending…';
         fetch(endpoint, {
           method: 'POST',
